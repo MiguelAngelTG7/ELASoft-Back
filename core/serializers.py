@@ -56,6 +56,10 @@ class NotaSerializer(serializers.ModelSerializer):
     promedio = serializers.FloatField(read_only=True)
     estado = serializers.SerializerMethodField()
     asistencia_pct = serializers.SerializerMethodField()
+    curso_nombre = serializers.CharField(source='clase.curso.nombre', read_only=True) 
+    nivel_nombre = serializers.CharField(source='clase.curso.nivel.nombre', read_only=True)
+    horarios = serializers.SerializerMethodField()
+
     
     class Meta:
         model = Nota
@@ -63,6 +67,9 @@ class NotaSerializer(serializers.ModelSerializer):
             'id',
             'alumno',
             'alumno_nombre',
+            'curso_nombre',
+            'nivel_nombre', 
+            'horarios',
             'nota1',
             'nota2',
             'nota3',
@@ -83,3 +90,7 @@ class NotaSerializer(serializers.ModelSerializer):
         if value < 0 or value > 20:
             raise serializers.ValidationError("La nota debe estar entre 0 y 20")
         return value
+    
+    def get_horarios(self, obj):
+        return [str(h) for h in obj.clase.horarios.all()]
+

@@ -103,6 +103,7 @@ def guardar_asistencia(request, clase_id):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def notas_por_clase(request, clase_id):
+    
     if request.method == 'GET':
         notas = Nota.objects.filter(clase_id=clase_id)
 
