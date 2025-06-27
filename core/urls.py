@@ -7,6 +7,7 @@ from .views import (
     guardar_asistencia,
     notas_por_clase,
     dashboard_alumno,
+    dashboard_director, 
 )
 
 urlpatterns = [
@@ -29,5 +30,9 @@ urlpatterns = [
 
     # Notas Asistencia para Alumno
     path('alumno/dashboard/', dashboard_alumno, name='dashboard-alumno'),
+
+    # Dashboard Director Académico
+    path('director/dashboard/', dashboard_director, name='dashboard-director'),
+
 
 ]

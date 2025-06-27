@@ -182,3 +182,35 @@ def dashboard_alumno(request):
         "alumno_nombre": alumno.get_full_name() or alumno.username,
         "cursos": serializer.data
     })
+
+# ----------------------------
+# Vista 7: Obtener datos para Director Academico
+# ----------------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_director(request):
+    director = request.user
+    # Traemos todos los cursos activos en clases actuales
+    clases = Clase.objects.filter(periodo__activo=True).distinct()
+    data = []
+    for clase in clases:
+        notas = Nota.objects.filter(clase=clase)
+        total_alumnos = clase.alumnos.count()
+        aprobados = sum(1 for n in notas if n.estado_aprobacion() == "Aprobado")
+        asistencia_prom = (
+            sum(n.calcular_asistencia() for n in notas) / notas.count()
+            if notas.exists() else 0
+        )
+        data.append({
+            "curso": clase.curso.nombre,
+            "nivel": clase.curso.nivel.nombre,
+            "horarios": [str(h) for h in clase.horarios.all()],  
+            "periodo": clase.periodo.nombre,
+            "total_alumnos": total_alumnos,
+            "alumnos_con_notas": notas.count(),
+            "aprobados": aprobados,
+            "porcentaje_aprobados": round((aprobados / total_alumnos * 100), 2) if total_alumnos else 0,
+            "asistencia_promedio": round(asistencia_prom, 2)
+        })
+    return Response({"dashboard": data})
