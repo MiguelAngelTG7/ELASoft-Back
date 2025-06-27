@@ -99,12 +99,6 @@ def guardar_asistencia(request, clase_id):
 # ----------------------------
 # Vista 5: Obtener y registrar notas por clase
 # ----------------------------
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Clase, Nota
-from .serializers import NotaSerializer
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -173,3 +167,18 @@ def notas_por_clase(request, clase_id):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"mensaje": "Notas registradas correctamente."})
+    
+# ----------------------------
+# Vista 6: Obtener notas y asistencia del Alumno
+# ----------------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_alumno(request):
+    alumno = request.user
+    notas = Nota.objects.filter(alumno=alumno).order_by('clase__curso__nombre')
+    serializer = NotaSerializer(notas, many=True)
+    return Response({
+        "alumno_nombre": alumno.get_full_name() or alumno.username,
+        "cursos": serializer.data
+    })
