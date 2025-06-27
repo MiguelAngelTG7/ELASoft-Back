@@ -135,10 +135,12 @@ class Nota(models.Model):
         return round((self.nota1 + self.nota2 + self.nota3 + self.nota4) / 4, 2)
 
     def calcular_asistencia(self):
-        presentes = Asistencia.objects.filter(clase=self.clase, alumno=self.alumno, presente=True).count()
         total = self.clase.total_sesiones or 1
+        if total == 0:
+            return 0
+        presentes = Asistencia.objects.filter(clase=self.clase, alumno=self.alumno, presente=True).count()
         return round((presentes / total) * 100, 2)
-
+    
     def estado_aprobacion(self):
         asistencia = self.calcular_asistencia()
         return "Aprobado" if self.promedio >= 10.5 and asistencia >= 75 else "Desaprobado"

@@ -2,9 +2,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics, permissions
-from .models import Clase, Asistencia
-from .serializers import ClaseProfesorSerializer, AsistenciaSerializer
+from rest_framework import generics, permissions, status
+from .models import Clase, Asistencia, Nota
+from .serializers import ClaseProfesorSerializer, AsistenciaSerializer, NotaSerializer
 from django.utils import timezone
 
 
@@ -46,7 +46,6 @@ class ClasesDelProfesorView(APIView):
 def obtener_asistencia(request, clase_id):
     fecha = request.query_params.get('fecha', timezone.now().date())
 
-    # Buscar registros de asistencia existentes
     asistencias = Asistencia.objects.filter(clase_id=clase_id, fecha=fecha)
 
     if not asistencias.exists():
@@ -57,7 +56,7 @@ def obtener_asistencia(request, clase_id):
                     clase=clase,
                     alumno=alumno,
                     fecha=fecha,
-                    presente=False  # por defecto
+                    presente=False
                 )
             asistencias = Asistencia.objects.filter(clase=clase, fecha=fecha)
         except Clase.DoesNotExist:
@@ -75,7 +74,7 @@ def obtener_asistencia(request, clase_id):
 
 
 # ----------------------------
-# Vista 4: Guardar asistencia (masiva)
+# Vista 4: Guardar asistencia
 # ----------------------------
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -95,3 +94,82 @@ def guardar_asistencia(request, clase_id):
         )
 
     return Response({"mensaje": "Asistencia guardada correctamente"})
+
+
+# ----------------------------
+# Vista 5: Obtener y registrar notas por clase
+# ----------------------------
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Clase, Nota
+from .serializers import NotaSerializer
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def notas_por_clase(request, clase_id):
+    if request.method == 'GET':
+        notas = Nota.objects.filter(clase_id=clase_id)
+
+        # Crear notas vacías si no existen
+        if not notas.exists():
+            try:
+                clase = Clase.objects.get(id=clase_id)
+                for alumno in clase.alumnos.all():
+                    Nota.objects.create(
+                        clase=clase,
+                        alumno=alumno,
+                        nota1=0,
+                        nota2=0,
+                        nota3=0,
+                        nota4=0
+                    )
+                notas = Nota.objects.filter(clase=clase)
+            except Clase.DoesNotExist:
+                return Response({"error": "Clase no encontrada"}, status=404)
+
+        serializer = NotaSerializer(notas, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        # Permitir que venga como {"notas": [...] } o como lista directa
+        notas_data = request.data.get("notas") or request.data
+
+        if not isinstance(notas_data, list) or not notas_data:
+            return Response({"error": "No se recibieron datos de notas."}, status=status.HTTP_400_BAD_REQUEST)
+
+        errores = []
+
+        for nota_data in notas_data:
+            try:
+                alumno_id = nota_data["alumno_id"]
+
+                nota1 = float(nota_data.get("nota1") or 0)
+                nota2 = float(nota_data.get("nota2") or 0)
+                nota3 = float(nota_data.get("nota3") or 0)
+                nota4 = float(nota_data.get("nota4") or 0)
+
+                Nota.objects.update_or_create(
+                    clase_id=clase_id,
+                    alumno_id=alumno_id,
+                    defaults={
+                        "nota1": nota1,
+                        "nota2": nota2,
+                        "nota3": nota3,
+                        "nota4": nota4,
+                    }
+                )
+            except Exception as e:
+                errores.append({
+                    "alumno_id": nota_data.get("alumno_id"),
+                    "error": str(e)
+                })
+
+        if errores:
+            return Response({
+                "mensaje": "Algunas notas no se pudieron guardar.",
+                "errores": errores
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"mensaje": "Notas registradas correctamente."})

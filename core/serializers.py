@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import Clase, Asistencia
+from .models import Clase, Asistencia, Nota
 
-
+# ------------------------------
+# Serializer para Clase del Profesor
+# ------------------------------
 class ClaseProfesorSerializer(serializers.ModelSerializer):
     curso_nombre = serializers.CharField(source='curso.nombre')
     periodo_nombre = serializers.CharField(source='periodo.nombre')
@@ -35,9 +37,49 @@ class ClaseProfesorSerializer(serializers.ModelSerializer):
         return f"{obj.curso.nombre} — {obj.periodo.nombre} ({horarios})"
 
 
+# ------------------------------
+# Serializer para Asistencia
+# ------------------------------
 class AsistenciaSerializer(serializers.ModelSerializer):
     alumno_nombre = serializers.CharField(source='alumno.username', read_only=True)
 
     class Meta:
         model = Asistencia
         fields = ['id', 'alumno', 'alumno_nombre', 'clase', 'fecha', 'presente']
+
+
+# ------------------------------
+# Serializer para Nota
+# ------------------------------
+class NotaSerializer(serializers.ModelSerializer):
+    alumno_nombre = serializers.CharField(source='alumno.username', read_only=True)
+    promedio = serializers.FloatField(read_only=True)
+    estado = serializers.SerializerMethodField()
+    asistencia_pct = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Nota
+        fields = [
+            'id',
+            'alumno',
+            'alumno_nombre',
+            'nota1',
+            'nota2',
+            'nota3',
+            'nota4',
+            'promedio',
+            'estado',
+            'asistencia_pct',
+        ]
+
+    def get_asistencia_pct(self, obj):
+        return obj.calcular_asistencia()
+
+    def get_estado(self, obj):
+        return obj.estado_aprobacion()
+
+    # Validación de rango de notas
+    def validate_nota1(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La nota debe estar entre 0 y 20")
+        return value

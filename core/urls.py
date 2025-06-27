@@ -1,16 +1,28 @@
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import (
+    usuario_actual,
+    ClasesDelProfesorView,
+    obtener_asistencia,
+    guardar_asistencia,
+    notas_por_clase,
 )
-from .views import usuario_actual, ClasesDelProfesorView, obtener_asistencia, guardar_asistencia
 
 urlpatterns = [
+    # Autenticación
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('usuario/', usuario_actual),  # Vista actual de usuario
-    path('clases/profesor/', ClasesDelProfesorView.as_view(), name='clases-del-profesor'),  
-    path('clases/<int:clase_id>/asistencia/', obtener_asistencia),
-    path('clases/<int:clase_id>/asistencia/guardar/', guardar_asistencia)
-]
 
+    # Usuario
+    path('usuario/', usuario_actual, name='usuario_actual'),
+
+    # Clases del profesor
+    path('clases/profesor/', ClasesDelProfesorView.as_view(), name='clases-del-profesor'),
+
+    # Asistencia
+    path('clases/<int:clase_id>/asistencia/', obtener_asistencia, name='obtener_asistencia'),
+    path('clases/<int:clase_id>/asistencia/guardar/', guardar_asistencia, name='guardar_asistencia'),
+
+    # Notas
+    path('clases/<int:clase_id>/notas/', notas_por_clase, name='notas-por-clase'),
+]
