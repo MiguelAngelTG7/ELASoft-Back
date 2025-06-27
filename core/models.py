@@ -3,6 +3,9 @@ from django.db import models
 from django.utils import timezone
 from django.db.models import Avg
 
+# -----------------------------
+# MODELO DE USUARIO PERSONALIZADO
+# -----------------------------
 class Usuario(AbstractUser):
     ROLES = (
         ('director', 'Director Académico'),
@@ -13,13 +16,21 @@ class Usuario(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
-    
+
+
+# -----------------------------
+# MODELO DE NIVEL
+# -----------------------------
 class Nivel(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.nombre
 
+
+# -----------------------------
+# MODELO DE CURSO
+# -----------------------------
 class Curso(models.Model):
     nombre = models.CharField(max_length=100)
     nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE, related_name='cursos')
@@ -27,7 +38,11 @@ class Curso(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.nivel})"
-    
+
+
+# -----------------------------
+# MODELO DE HORARIO
+# -----------------------------
 class Horario(models.Model):
     DIAS_SEMANA = [
         ('lunes', 'Lunes'),
@@ -44,6 +59,10 @@ class Horario(models.Model):
     def __str__(self):
         return f"{self.get_dia_display()} - {self.hora.strftime('%I:%M %p')}"
 
+
+# -----------------------------
+# PROFESORES POR CURSO
+# -----------------------------
 class ProfesorCurso(models.Model):
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
     profesor_titular = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='cursos_titular')
@@ -51,7 +70,11 @@ class ProfesorCurso(models.Model):
 
     def __str__(self):
         return f"{self.curso} | Titular: {self.profesor_titular}"
-    
+
+
+# -----------------------------
+# PERIODO ACADÉMICO
+# -----------------------------
 class PeriodoAcademico(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     anio = models.PositiveIntegerField()
@@ -62,9 +85,13 @@ class PeriodoAcademico(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.anio})"
 
+
+# -----------------------------
+# CLASE
+# -----------------------------
 class Clase(models.Model):
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
-    periodo = models.ForeignKey(PeriodoAcademico, on_delete=models.CASCADE, null=True, blank=True)  # nuevo campo
+    periodo = models.ForeignKey(PeriodoAcademico, on_delete=models.CASCADE, null=True, blank=True)
     horarios = models.ManyToManyField(Horario)
     profesores = models.OneToOneField(ProfesorCurso, on_delete=models.CASCADE)
     alumnos = models.ManyToManyField(Usuario, limit_choices_to={'rol': 'alumno'}, blank=True)
@@ -73,7 +100,10 @@ class Clase(models.Model):
     def __str__(self):
         return f"Clase de {self.curso} - {self.periodo}"
 
-    
+
+# -----------------------------
+# ASISTENCIA
+# -----------------------------
 class Asistencia(models.Model):
     alumno = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'alumno'})
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
@@ -87,8 +117,9 @@ class Asistencia(models.Model):
         estado = "Presente" if self.presente else "Ausente"
         return f"{self.alumno.username} - {estado} ({self.fecha})"
 
+
 # -----------------------------
-# MODELO DE NOTA
+# NOTAS
 # -----------------------------
 class Nota(models.Model):
     alumno = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'alumno'})
@@ -114,4 +145,3 @@ class Nota(models.Model):
 
     def __str__(self):
         return f"{self.alumno.username} - Prom: {self.promedio} - Asist: {self.calcular_asistencia()}% - {self.estado_aprobacion()}"
-
