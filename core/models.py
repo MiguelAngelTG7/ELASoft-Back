@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from django.db.models import Avg
+from datetime import date
 
 # -----------------------------
 # MODELO DE USUARIO PERSONALIZADO
@@ -13,6 +14,25 @@ class Usuario(AbstractUser):
         ('alumno', 'Alumno'),
     )
     rol = models.CharField(max_length=20, choices=ROLES)
+
+  # Nuevos campos para alumnos
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    direccion = models.CharField(max_length=255, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    grupo_sanguineo = models.CharField(max_length=5, blank=True)
+    alergias = models.TextField(blank=True)
+    interesado = models.BooleanField(default=False)
+    nuevo_creyente = models.BooleanField(default=False)
+    bautizado = models.BooleanField(default=False)
+    tiene_ministerio = models.BooleanField(default=False)
+
+    def edad(self):
+        if self.fecha_nacimiento:
+            hoy = date.today()
+            return hoy.year - self.fecha_nacimiento.year - (
+                (hoy.month, hoy.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day)
+            )
+        return None
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"

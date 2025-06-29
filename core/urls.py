@@ -7,8 +7,13 @@ from .views import (
     guardar_asistencia,
     notas_por_clase,
     dashboard_alumno,
-    dashboard_director, 
+    dashboard_director,
+    RegistrarAlumnoAPIView,
+    crear_alumno,
+    alumnos_del_profesor,
 )
+from . import views
+from core.views import remover_alumno_de_clase
 
 urlpatterns = [
     # Autenticación
@@ -33,6 +38,28 @@ urlpatterns = [
 
     # Dashboard Director Académico
     path('director/dashboard/', dashboard_director, name='dashboard-director'),
+
+    # Profesor Registra Nuevo Alumno
+    path('profesor/registrar-alumno/', RegistrarAlumnoAPIView.as_view(), name='registrar-alumno'),
+
+    # Busqueda de Alumnos Existentes
+    path('alumnos/buscar/', views.buscar_alumnos, name='buscar_alumnos'),
+
+    # Asigna Alumnos Existentes
+    path('profesor/clases/<int:clase_id>/asignar-alumno/', views.asignar_alumno_a_clase, name='asignar_alumno'),
+
+    # Remueve Alumno de Clase
+    path('profesor/clases/<int:clase_id>/remover-alumno/', remover_alumno_de_clase, name='remover_alumno'),
+
+    #Clases existentes del Profesor
+    path('profesor/clases/', views.ClasesDelProfesorView.as_view(), name='clases_del_profesor'),
+
+    #Crear Alumno
+    path('profesor/crear-alumno/', crear_alumno, name='crear_alumno'),
+
+    #Lista de Alumnos del Profesor
+    path('profesor/alumnos/', alumnos_del_profesor, name='alumnos-del-profesor'),
+
 
 
 ]
