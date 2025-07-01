@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -86,13 +85,13 @@ class PeriodoAcademico(models.Model):
 # -----------------------------
 # CLASE
 # -----------------------------
+
 class Clase(models.Model):
     nombre = models.CharField(max_length=100, null=True)  
     nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE, null=True, related_name='clases')
     periodo = models.ForeignKey(PeriodoAcademico, on_delete=models.CASCADE, null=True, blank=True)
     horarios = models.ManyToManyField(Horario, blank=True)  
 
-    
     profesor_titular = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='clases_titular', limit_choices_to={'rol': 'profesor'})
     profesor_asistente = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True,
@@ -153,3 +152,14 @@ class Nota(models.Model):
 
     def __str__(self):
         return f"{self.alumno.username} - Prom: {self.promedio} - Asist: {self.calcular_asistencia()}% - {self.estado_aprobacion()}"
+
+
+# -----------------------------
+# SESION CLASE
+# -----------------------------
+class SesionClase(models.Model):
+    clase = models.ForeignKey(Clase, on_delete=models.CASCADE, related_name='sesiones')
+    fecha = models.DateField()
+
+    def __str__(self):
+        return f"{self.clase.nombre} - {self.fecha}"

@@ -38,57 +38,76 @@ def get_clases_profesor(usuario):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def obtener_asistencia(request, clase_id):
-    fecha = request.query_params.get('fecha', timezone.now().date())
-
+    """
+    Devuelve la asistencia de todos los alumnos de la clase para todas las fechas programadas (sesiones).
+    """
     try:
         clase = Clase.objects.get(id=clase_id)
     except Clase.DoesNotExist:
         return Response({"error": "Clase no encontrada"}, status=404)
 
-    # ✅ Asegurar que TODOS los alumnos actuales tengan asistencia ese día
-    for alumno in clase.alumnos.all():
-        Asistencia.objects.get_or_create(
-            clase=clase,
-            alumno=alumno,
-            fecha=fecha,
-            defaults={"presente": False}  # por defecto ausente
-        )
+    # Obtener todas las fechas programadas (sesiones)
+    sesiones = clase.sesiones.order_by('fecha')
+    fechas = [s.fecha for s in sesiones]
+    alumnos = clase.alumnos.all()
 
-    # ✅ Obtener todos los registros actualizados (incluido Juan)
-    asistencias = Asistencia.objects.filter(clase=clase, fecha=fecha)
-
-    data = [
-        {
-            "alumno_id": a.alumno.id,
-            "alumno_nombre": a.alumno.username,
-            "presente": a.presente,
+    # Para cada alumno y cada fecha, obtener o crear la asistencia
+    data = []
+    for alumno in alumnos:
+        fila = {
+            "alumno_id": alumno.id,
+            "alumno_nombre": alumno.username,
+            "asistencias": []
         }
-        for a in asistencias
-    ]
+        for fecha in fechas:
+            asistencia, _ = Asistencia.objects.get_or_create(
+                clase=clase,
+                alumno=alumno,
+                fecha=fecha,
+                defaults={"presente": False}
+            )
+            fila["asistencias"].append({
+                "fecha": str(fecha),
+                "presente": asistencia.presente
+            })
+        data.append(fila)
 
-    return Response(data)
+    return Response({
+        "fechas": [str(f) for f in fechas],
+        "alumnos": data
+    })
 
 
 
 # ----------------------------
 # Vista 4: Guardar asistencia
 # ----------------------------
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def guardar_asistencia(request, clase_id):
-    fecha = request.data.get("fecha")
+    """
+    Guarda la asistencia de todos los alumnos para todas las fechas programadas de la clase.
+    Espera un JSON con: { asistencias: [ { alumno_id, asistencias: [ { fecha, presente } ] } ] }
+    """
     asistencias = request.data.get("asistencias", [])
 
-    if not fecha or not asistencias:
-        return Response({"error": "Datos incompletos"}, status=400)
+    try:
+        clase = Clase.objects.get(id=clase_id)
+    except Clase.DoesNotExist:
+        return Response({"error": "Clase no encontrada"}, status=404)
 
-    for a in asistencias:
-        Asistencia.objects.update_or_create(
-            clase_id=clase_id,
-            alumno_id=a["alumno_id"],
-            fecha=fecha,
-            defaults={"presente": a["presente"]}
-        )
+    for alumno_asist in asistencias:
+        alumno_id = alumno_asist.get("alumno_id")
+        for asistencia in alumno_asist.get("asistencias", []):
+            fecha = asistencia.get("fecha")
+            presente = asistencia.get("presente", False)
+            Asistencia.objects.update_or_create(
+                clase=clase,
+                alumno_id=alumno_id,
+                fecha=fecha,
+                defaults={"presente": presente}
+            )
 
     return Response({"mensaje": "Asistencia guardada correctamente"})
 
@@ -494,3 +513,65 @@ def listar_clases_profesor(request):
     clases = clases.distinct()
     serializer = ClaseProfesorSerializer(clases, many=True)
     return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def reporte_asistencia_clase(request, clase_id):
+    """
+    Devuelve el reporte de asistencia de todos los alumnos de una clase:
+    nombre, total sesiones, presentes, ausentes, fechas, porcentaje, total y total de totales
+    """
+    try:
+        clase = Clase.objects.get(id=clase_id)
+    except Clase.DoesNotExist:
+        return Response({"error": "Clase no encontrada"}, status=404)
+
+    total_sesiones = clase.total_sesiones
+    # Usar fechas de SesionClase si existen, si no, usar fechas de asistencia
+    sesiones = clase.sesiones.order_by('fecha')
+    if sesiones.exists():
+        fechas = [str(s.fecha) for s in sesiones]
+    else:
+        fechas = sorted(list(Asistencia.objects.filter(clase=clase).values_list('fecha', flat=True).distinct()))
+    # Limitar a total_sesiones
+    fechas = fechas[:total_sesiones]
+    alumnos = clase.alumnos.all()
+    reporte = []
+    total_presentes = 0
+    total_ausentes = 0
+
+    for alumno in alumnos:
+        asistencias = Asistencia.objects.filter(clase=clase, alumno=alumno, fecha__in=fechas)
+        presentes = asistencias.filter(presente=True).count()
+        ausentes = asistencias.filter(presente=False).count()
+        porcentaje = round((presentes / total_sesiones) * 100, 2) if total_sesiones else 0
+        total_presentes += presentes
+        total_ausentes += ausentes
+        # Crear lista de asistencias por fecha (en el mismo orden que fechas)
+        asistencias_por_fecha = []
+        for fecha in fechas:
+            a = asistencias.filter(fecha=fecha).first()
+            asistencias_por_fecha.append({
+                "fecha": str(fecha),
+                "presente": a.presente if a else False
+            })
+        reporte.append({
+            "alumno_id": alumno.id,
+            "nombre": f"{alumno.first_name} {alumno.last_name}",
+            "total_sesiones": total_sesiones,
+            "presentes": presentes,
+            "ausentes": ausentes,
+            "fechas": fechas,
+            "porcentaje": porcentaje,
+            "asistencias": asistencias_por_fecha
+        })
+
+    return Response({
+        "clase": clase.nombre,
+        "total_sesiones": total_sesiones,
+        "fechas": fechas,
+        "reporte": reporte,
+        "total_presentes": total_presentes,
+        "total_ausentes": total_ausentes,
+        "total_alumnos": alumnos.count(),
+    })

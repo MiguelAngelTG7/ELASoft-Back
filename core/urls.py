@@ -17,9 +17,10 @@ from .views import (
     listar_clases,
     buscar_alumnos,
     asignar_alumno_a_clase,
-    listar_clases_profesor
+    listar_clases_profesor,
+    remover_alumno_de_clase,
+    reporte_asistencia_clase,
 )
-from .views import remover_alumno_de_clase
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -67,6 +68,7 @@ urlpatterns = [
     path('director/clases/', listar_clases, name='listar_clases'),
 
     path('profesor/clases/', listar_clases_profesor, name='listar_clases_profesor'),
+    path('clases/<int:clase_id>/reporte-asistencia/', reporte_asistencia_clase, name='reporte_asistencia_clase'),
 ]
 
 if settings.DEBUG:
