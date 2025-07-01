@@ -5,11 +5,12 @@ from .models import Clase, Asistencia, Nota, Usuario
 # ------------------------------
 # Serializer para Clase del Profesor
 # ------------------------------
+
 class ClaseProfesorSerializer(serializers.ModelSerializer):
     nombre = serializers.CharField()
-    periodo_nombre = serializers.CharField(source='periodo.nombre')
-    nivel_nombre = serializers.CharField(source='nivel.nombre', read_only=True)
-    horarios = serializers.StringRelatedField(many=True, read_only=True)
+    periodo_nombre = serializers.CharField(source='periodo.nombre', default='', read_only=True)
+    nivel_nombre = serializers.CharField(source='nivel.nombre', default='', read_only=True)
+    horarios = serializers.SerializerMethodField()
     profesor_titular = serializers.SerializerMethodField()
     profesor_asistente = serializers.SerializerMethodField()
     alumnos = serializers.SerializerMethodField()
@@ -29,25 +30,24 @@ class ClaseProfesorSerializer(serializers.ModelSerializer):
             'nombre_completo',
         ]
 
+
     def get_profesor_titular(self, obj):
-        try:
-            return obj.profesor_titular.username
-        except AttributeError:
-            return None
+        return getattr(obj.profesor_titular, 'username', None)
+
 
     def get_profesor_asistente(self, obj):
-        try:
-            return obj.profesor_asistente.username
-        except AttributeError:
-            return None
+        return getattr(obj.profesor_asistente, 'username', None)
+
 
     def get_alumnos(self, obj):
         return [alumno.username for alumno in obj.alumnos.all()]
 
+
     def get_nombre_completo(self, obj):
         horarios = ", ".join(str(h) for h in obj.horarios.all())
-        return f"{obj.nombre} — {obj.periodo.nombre} ({horarios})"
-    
+        periodo = getattr(obj.periodo, 'nombre', 'Sin periodo')
+        return f"{obj.nombre} — {periodo} ({horarios})"
+
     def get_horarios(self, obj):
         return [h.get_dia_display() for h in obj.horarios.all()]
 
@@ -66,13 +66,14 @@ class AsistenciaSerializer(serializers.ModelSerializer):
 # ------------------------------
 # Serializer para Nota
 # ------------------------------
+
 class NotaSerializer(serializers.ModelSerializer):
     alumno_nombre = serializers.CharField(source='alumno.username', read_only=True)
     promedio = serializers.FloatField(read_only=True)
     estado = serializers.SerializerMethodField()
     asistencia_pct = serializers.SerializerMethodField()
-    curso_nombre = serializers.CharField(source='clase.nombre', read_only=True)
-    nivel_nombre = serializers.CharField(source='clase.nivel.nombre', read_only=True)
+    curso_nombre = serializers.CharField(source='clase.nombre', default='', read_only=True)
+    nivel_nombre = serializers.CharField(source='clase.nivel.nombre', default='', read_only=True)
     horarios = serializers.SerializerMethodField()
 
     class Meta:
@@ -105,7 +106,9 @@ class NotaSerializer(serializers.ModelSerializer):
         return value
 
     def get_horarios(self, obj):
-        return [str(h) for h in obj.clase.horarios.all()]
+        if hasattr(obj.clase, 'horarios'):
+            return [str(h) for h in obj.clase.horarios.all()]
+        return []
 
 
 # ------------------------------

@@ -1,12 +1,13 @@
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from django.db.models import Avg
 from datetime import date
 
 # -----------------------------
 # MODELO DE USUARIO PERSONALIZADO
 # -----------------------------
+
 class Usuario(AbstractUser):
     ROLES = (
         ('director', 'Director Académico'),
@@ -15,7 +16,7 @@ class Usuario(AbstractUser):
     )
     rol = models.CharField(max_length=20, choices=ROLES)
 
-  # Nuevos campos para alumnos
+    # Nuevos campos para alumnos
     fecha_nacimiento = models.DateField(null=True, blank=True)
     direccion = models.CharField(max_length=255, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
@@ -125,14 +126,15 @@ class Asistencia(models.Model):
 # -----------------------------
 # NOTAS
 # -----------------------------
+
 class Nota(models.Model):
     alumno = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'alumno'})
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
 
-    nota1 = models.DecimalField(max_digits=4, decimal_places=2)
-    nota2 = models.DecimalField(max_digits=4, decimal_places=2)
-    nota3 = models.DecimalField(max_digits=4, decimal_places=2)
-    nota4 = models.DecimalField(max_digits=4, decimal_places=2)
+    nota1 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    nota2 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    nota3 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    nota4 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
 
     @property
     def promedio(self):
@@ -144,7 +146,7 @@ class Nota(models.Model):
             return 0
         presentes = Asistencia.objects.filter(clase=self.clase, alumno=self.alumno, presente=True).count()
         return round((presentes / total) * 100, 2)
-    
+
     def estado_aprobacion(self):
         asistencia = self.calcular_asistencia()
         return "Aprobado" if self.promedio >= 10.5 and asistencia >= 75 else "Desaprobado"

@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import Nivel, Usuario, Horario, Clase, Asistencia, Nota, PeriodoAcademico
 
+admin.site.site_header = "ELASoft Admin"
+admin.site.site_title = "ELASoft Admin"
+admin.site.index_title = "Panel de Administración de ELASoft"
+
 class UsuarioAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ("Información adicional", {

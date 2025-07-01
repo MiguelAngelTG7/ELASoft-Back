@@ -2,7 +2,6 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     usuario_actual,
-    ClasesDelProfesorView,
     obtener_asistencia,
     guardar_asistencia,
     notas_por_clase,
@@ -18,8 +17,11 @@ from .views import (
     listar_clases,
     buscar_alumnos,
     asignar_alumno_a_clase,
+    listar_clases_profesor
 )
-from core.views import remover_alumno_de_clase
+from .views import remover_alumno_de_clase
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Autenticación
@@ -30,7 +32,7 @@ urlpatterns = [
     path('usuario/', usuario_actual, name='usuario_actual'),
 
     # Clases del profesor
-    path('clases/profesor/', ClasesDelProfesorView.as_view(), name='clases-del-profesor'),
+    # path('clases/profesor/', ClasesDelProfesorView.as_view(), name='clases-del-profesor'),
 
     # Asistencia
     path('clases/<int:clase_id>/asistencia/', obtener_asistencia, name='obtener_asistencia'),
@@ -64,4 +66,8 @@ urlpatterns = [
     path('director/niveles/', listar_niveles, name='listar_niveles'),
     path('director/clases/', listar_clases, name='listar_clases'),
 
+    path('profesor/clases/', listar_clases_profesor, name='listar_clases_profesor'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT or 'static')

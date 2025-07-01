@@ -2,13 +2,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics, permissions, status
-from rest_framework.generics import ListAPIView
-from .models import Clase, Asistencia, Nota, Usuario
+from rest_framework import status, permissions
+from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel
 from .serializers import ClaseProfesorSerializer, AsistenciaSerializer, NotaSerializer, AlumnoRegistroSerializer, UsuarioSerializer, AlumnoDetalleSerializer
 from django.utils import timezone
 from django.db.models import Q
-from core.models import Nota 
 
 
 # ----------------------------
@@ -24,21 +22,14 @@ def usuario_actual(request):
 
 
 # ----------------------------
-# Vista 2: Clases del Profesor
+# Utilidad: obtener clases de un profesor
 # ----------------------------
-class ClasesDelProfesorView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        usuario = request.user
-        clases = Clase.objects.filter(
-            profesor_titular=usuario
-        ) | Clase.objects.filter(
-            profesor_asistente=usuario
-        )
-        clases = clases.distinct()
-        serializer = ClaseProfesorSerializer(clases, many=True)
-        return Response(serializer.data)
+def get_clases_profesor(usuario):
+    return Clase.objects.filter(
+        profesor_titular=usuario
+    ) | Clase.objects.filter(
+        profesor_asistente=usuario
+    )
 
 
 # ----------------------------
@@ -390,12 +381,7 @@ def alumnos_del_profesor(request):
     clase_id = request.query_params.get('clase_id')  # filtro opcional
 
     # Buscar clases del profesor
-    clases = Clase.objects.filter(
-        profesores__profesor_titular=usuario
-    ) | Clase.objects.filter(
-        profesores__profesor_asistente=usuario
-    )
-    clases = clases.distinct()
+    clases = get_clases_profesor(usuario).distinct()
 
     # Filtrar alumnos de esas clases
     alumnos = Usuario.objects.filter(rol='alumno', clase__in=clases).distinct()
@@ -470,7 +456,6 @@ def listar_profesores(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_horarios(request):
-    from core.models import Horario  # Ajusta si está en otro archivo
     horarios = Horario.objects.all()
     data = [{"id": h.id, "dia": h.dia} for h in horarios]
     return Response(data)
@@ -478,7 +463,6 @@ def listar_horarios(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_niveles(request):
-    from core.models import Nivel
     niveles = Nivel.objects.all()
     data = [{"id": n.id, "nombre": n.nombre} for n in niveles]
     return Response(data)
@@ -497,3 +481,16 @@ def listar_clases(request):
             "horarios": [str(h) for h in c.horarios.all()]
          })
     return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_clases_profesor(request):
+    usuario = request.user
+    clases = Clase.objects.filter(
+        profesor_titular=usuario
+    ) | Clase.objects.filter(
+        profesor_asistente=usuario
+    )
+    clases = clases.distinct()
+    serializer = ClaseProfesorSerializer(clases, many=True)
+    return Response(serializer.data)
