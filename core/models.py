@@ -47,49 +47,25 @@ class Nivel(models.Model):
     def __str__(self):
         return self.nombre
 
-
-# -----------------------------
-# MODELO DE CURSO
-# -----------------------------
-class Curso(models.Model):
-    nombre = models.CharField(max_length=100)
-    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE, related_name='cursos')
-    activo = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.nombre} ({self.nivel})"
-
-
 # -----------------------------
 # MODELO DE HORARIO
 # -----------------------------
 class Horario(models.Model):
     DIAS_SEMANA = [
-        ('lunes', 'Lunes'),
-        ('martes', 'Martes'),
-        ('miercoles', 'Miércoles'),
-        ('jueves', 'Jueves'),
-        ('viernes', 'Viernes'),
-        ('sabado', 'Sábado'),
-        ('domingo', 'Domingo'),
+        ('Lunes', 'Lunes'),
+        ('Martes', 'Martes'),
+        ('Miercoles', 'Miércoles'),
+        ('Jueves', 'Jueves'),
+        ('Viernes', 'Viernes'),
+        ('Sabado', 'Sábado'),
+        ('Domingo', 'Domingo'),
+        ('Lunes a Viernes', 'Lunes a Viernes')
     ]
-    dia = models.CharField(max_length=10, choices=DIAS_SEMANA)
+    dia = models.CharField(max_length=16, choices=DIAS_SEMANA)
     hora = models.TimeField()
 
     def __str__(self):
         return f"{self.get_dia_display()} - {self.hora.strftime('%I:%M %p')}"
-
-
-# -----------------------------
-# PROFESORES POR CURSO
-# -----------------------------
-class ProfesorCurso(models.Model):
-    curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
-    profesor_titular = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='cursos_titular')
-    profesor_asistente = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='cursos_asistente', null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.curso} | Titular: {self.profesor_titular}"
 
 
 # -----------------------------
@@ -110,15 +86,23 @@ class PeriodoAcademico(models.Model):
 # CLASE
 # -----------------------------
 class Clase(models.Model):
-    curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=100, null=True)  
+    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE, null=True, related_name='clases')
     periodo = models.ForeignKey(PeriodoAcademico, on_delete=models.CASCADE, null=True, blank=True)
-    horarios = models.ManyToManyField(Horario)
-    profesores = models.OneToOneField(ProfesorCurso, on_delete=models.CASCADE)
+    horarios = models.ManyToManyField(Horario, blank=True)  
+
+    
+    profesor_titular = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='clases_titular', limit_choices_to={'rol': 'profesor'})
+    profesor_asistente = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='clases_asistente', limit_choices_to={'rol': 'profesor'})
+
     alumnos = models.ManyToManyField(Usuario, limit_choices_to={'rol': 'alumno'}, blank=True)
     total_sesiones = models.PositiveIntegerField(default=8)
 
     def __str__(self):
-        return f"Clase de {self.curso} - {self.periodo}"
+        return f"{self.nombre} — {self.nivel} ({self.periodo})"
+
 
 
 # -----------------------------

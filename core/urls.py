@@ -11,8 +11,14 @@ from .views import (
     RegistrarAlumnoAPIView,
     crear_alumno,
     alumnos_del_profesor,
+    alumnos_para_director,
+    listar_profesores,
+    listar_horarios,
+    listar_niveles,
+    listar_clases,
+    buscar_alumnos,
+    asignar_alumno_a_clase,
 )
-from . import views
 from core.views import remover_alumno_de_clase
 
 urlpatterns = [
@@ -20,7 +26,7 @@ urlpatterns = [
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # Usuario
+    # Usuario actual
     path('usuario/', usuario_actual, name='usuario_actual'),
 
     # Clases del profesor
@@ -33,33 +39,29 @@ urlpatterns = [
     # Notas
     path('clases/<int:clase_id>/notas/', notas_por_clase, name='notas-por-clase'),
 
-    # Notas Asistencia para Alumno
+    # Dashboard del alumno
     path('alumno/dashboard/', dashboard_alumno, name='dashboard-alumno'),
 
-    # Dashboard Director Académico
+    # Dashboard del director
     path('director/dashboard/', dashboard_director, name='dashboard-director'),
 
-    # Profesor Registra Nuevo Alumno
+    # Registro y creación de alumnos
     path('profesor/registrar-alumno/', RegistrarAlumnoAPIView.as_view(), name='registrar-alumno'),
-
-    # Busqueda de Alumnos Existentes
-    path('alumnos/buscar/', views.buscar_alumnos, name='buscar_alumnos'),
-
-    # Asigna Alumnos Existentes
-    path('profesor/clases/<int:clase_id>/asignar-alumno/', views.asignar_alumno_a_clase, name='asignar_alumno'),
-
-    # Remueve Alumno de Clase
-    path('profesor/clases/<int:clase_id>/remover-alumno/', remover_alumno_de_clase, name='remover_alumno'),
-
-    #Clases existentes del Profesor
-    path('profesor/clases/', views.ClasesDelProfesorView.as_view(), name='clases_del_profesor'),
-
-    #Crear Alumno
     path('profesor/crear-alumno/', crear_alumno, name='crear_alumno'),
 
-    #Lista de Alumnos del Profesor
+    # Gestión de alumnos existentes
+    path('alumnos/buscar/', buscar_alumnos, name='buscar_alumnos'),
+    path('profesor/clases/<int:clase_id>/asignar-alumno/', asignar_alumno_a_clase, name='asignar_alumno'),
+    path('profesor/clases/<int:clase_id>/remover-alumno/', remover_alumno_de_clase, name='remover_alumno'),
+
+    # Alumnos por clase (profesor y director)
     path('profesor/alumnos/', alumnos_del_profesor, name='alumnos-del-profesor'),
+    path('director/alumnos/', alumnos_para_director, name='alumnos-para-director'),
 
-
+    # Listados para filtros del director
+    path('director/profesores/', listar_profesores, name='listar_profesores'),
+    path('director/horarios/', listar_horarios, name='listar_horarios'),
+    path('director/niveles/', listar_niveles, name='listar_niveles'),
+    path('director/clases/', listar_clases, name='listar_clases'),
 
 ]

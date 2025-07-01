@@ -32,9 +32,9 @@ class ClasesDelProfesorView(APIView):
     def get(self, request):
         usuario = request.user
         clases = Clase.objects.filter(
-            profesores__profesor_titular=usuario
+            profesor_titular=usuario
         ) | Clase.objects.filter(
-            profesores__profesor_asistente=usuario
+            profesor_asistente=usuario
         )
         clases = clases.distinct()
         serializer = ClaseProfesorSerializer(clases, many=True)
@@ -131,8 +131,8 @@ def notas_por_clase(request, clase_id):
                 "promedio": nota.promedio if nota else 0,
                 "asistencia_pct": nota.calcular_asistencia() if nota else 0,
                 "estado": nota.estado_aprobacion() if nota else "Sin notas",
-                "curso_nombre": clase.curso.nombre,
-                "nivel_nombre": clase.curso.nivel.nombre,
+                "curso_nombre": clase.nombre,
+                "nivel_nombre": clase.nivel.nombre,
                 "horarios": [str(h) for h in clase.horarios.all()],
             }
             resultados.append(resultado)
@@ -189,11 +189,11 @@ def notas_por_clase(request, clase_id):
 @permission_classes([IsAuthenticated])
 def dashboard_alumno(request):
     alumno = request.user
-    notas = Nota.objects.filter(alumno=alumno).order_by('clase__curso__nombre')
+    notas = Nota.objects.filter(alumno=alumno).order_by('clase__nombre')
     serializer = NotaSerializer(notas, many=True)
     return Response({
         "alumno_nombre": alumno.get_full_name() or alumno.username,
-        "cursos": serializer.data
+        "clases": serializer.data
     })
 
 # ----------------------------
@@ -216,8 +216,8 @@ def dashboard_director(request):
             if notas.exists() else 0
         )
         data.append({
-            "curso": clase.curso.nombre,
-            "nivel": clase.curso.nivel.nombre,
+            "curso": clase.nombre,
+            "nivel": clase.nivel.nombre,
             "horarios": [str(h) for h in clase.horarios.all()],  
             "periodo": clase.periodo.nombre,
             "total_alumnos": total_alumnos,
@@ -406,8 +406,8 @@ def alumnos_del_profesor(request):
         try:
             clase = Clase.objects.get(id=clase_id)
             clase_info = {
-                "clase_nombre": clase.curso.nombre,
-                "nivel": clase.curso.nivel.nombre,
+                "clase_nombre": clase.nombre,
+                "nivel": clase.nivel.nombre,
                 "horarios": [str(h) for h in clase.horarios.all()],
             }
         except Clase.DoesNotExist:
@@ -421,3 +421,79 @@ def alumnos_del_profesor(request):
         "clase": clase_info,
         "alumnos": serializer.data
     })
+
+# ----------------------------
+# Vista 14: Lista de Alumnos para Director
+# ----------------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def alumnos_para_director(request):
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+
+    clase_id = request.query_params.get('clase_id')
+    horario_id = request.query_params.get('horario_id')
+    profesor_id = request.query_params.get('profesor_id')
+    nivel_id = request.query_params.get('nivel_id')
+
+    clases = Clase.objects.all()
+
+    if clase_id:
+        clases = clases.filter(id=clase_id)
+    if horario_id:
+        clases = clases.filter(horarios__id=horario_id)
+    if profesor_id:
+        clases = clases.filter(
+            Q(profesores__profesor_titular__id=profesor_id) |
+            Q(profesores__profesor_asistente__id=profesor_id)
+        )
+    if nivel_id:
+        clases = clases.filter(nivel__id=nivel_id)
+
+    clases = clases.distinct()
+    alumnos = Usuario.objects.filter(rol='alumno', clase__in=clases).distinct()
+
+    serializer = AlumnoDetalleSerializer(alumnos, many=True)
+
+    return Response({
+        "alumnos": serializer.data
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_profesores(request):
+    profesores = Usuario.objects.filter(rol='profesor')
+    data = [{"id": p.id, "full_name": p.get_full_name() or p.username} for p in profesores]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_horarios(request):
+    from core.models import Horario  # Ajusta si está en otro archivo
+    horarios = Horario.objects.all()
+    data = [{"id": h.id, "dia": h.dia} for h in horarios]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_niveles(request):
+    from core.models import Nivel
+    niveles = Nivel.objects.all()
+    data = [{"id": n.id, "nombre": n.nombre} for n in niveles]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_clases(request):
+    clases = Clase.objects.prefetch_related('horarios', 'nivel', 'periodo').all()
+    data = []
+    for c in clases:
+        data.append({
+            "id": c.id,
+            "nombre": c.nombre,
+            "nivel": c.nivel.nombre if c.nivel else '',
+            "periodo_nombre": c.periodo.nombre if c.periodo else 'Sin periodo',
+            "horarios": [str(h) for h in c.horarios.all()]
+         })
+    return Response(data)

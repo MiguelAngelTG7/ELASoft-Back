@@ -6,11 +6,12 @@ from .models import Clase, Asistencia, Nota, Usuario
 # Serializer para Clase del Profesor
 # ------------------------------
 class ClaseProfesorSerializer(serializers.ModelSerializer):
-    curso_nombre = serializers.CharField(source='curso.nombre')
+    nombre = serializers.CharField()
     periodo_nombre = serializers.CharField(source='periodo.nombre')
-    horarios = serializers.SerializerMethodField()
-    profesor_titular = serializers.CharField(source='profesores.profesor_titular.username', default=None)
-    profesor_asistente = serializers.CharField(source='profesores.profesor_asistente.username', default=None)
+    nivel_nombre = serializers.CharField(source='nivel.nombre', read_only=True)
+    horarios = serializers.StringRelatedField(many=True, read_only=True)
+    profesor_titular = serializers.SerializerMethodField()
+    profesor_asistente = serializers.SerializerMethodField()
     alumnos = serializers.SerializerMethodField()
     nombre_completo = serializers.SerializerMethodField()
 
@@ -18,8 +19,9 @@ class ClaseProfesorSerializer(serializers.ModelSerializer):
         model = Clase
         fields = [
             'id',
-            'curso_nombre',
+            'nombre',
             'periodo_nombre',
+            'nivel_nombre',
             'horarios',
             'profesor_titular',
             'profesor_asistente',
@@ -27,15 +29,27 @@ class ClaseProfesorSerializer(serializers.ModelSerializer):
             'nombre_completo',
         ]
 
-    def get_horarios(self, obj):
-        return [str(horario) for horario in obj.horarios.all()]
+    def get_profesor_titular(self, obj):
+        try:
+            return obj.profesor_titular.username
+        except AttributeError:
+            return None
+
+    def get_profesor_asistente(self, obj):
+        try:
+            return obj.profesor_asistente.username
+        except AttributeError:
+            return None
 
     def get_alumnos(self, obj):
         return [alumno.username for alumno in obj.alumnos.all()]
 
     def get_nombre_completo(self, obj):
         horarios = ", ".join(str(h) for h in obj.horarios.all())
-        return f"{obj.curso.nombre} — {obj.periodo.nombre} ({horarios})"
+        return f"{obj.nombre} — {obj.periodo.nombre} ({horarios})"
+    
+    def get_horarios(self, obj):
+        return [h.get_dia_display() for h in obj.horarios.all()]
 
 
 # ------------------------------
@@ -57,11 +71,10 @@ class NotaSerializer(serializers.ModelSerializer):
     promedio = serializers.FloatField(read_only=True)
     estado = serializers.SerializerMethodField()
     asistencia_pct = serializers.SerializerMethodField()
-    curso_nombre = serializers.CharField(source='clase.curso.nombre', read_only=True) 
-    nivel_nombre = serializers.CharField(source='clase.curso.nivel.nombre', read_only=True)
+    curso_nombre = serializers.CharField(source='clase.nombre', read_only=True)
+    nivel_nombre = serializers.CharField(source='clase.nivel.nombre', read_only=True)
     horarios = serializers.SerializerMethodField()
 
-    
     class Meta:
         model = Nota
         fields = [
@@ -69,7 +82,7 @@ class NotaSerializer(serializers.ModelSerializer):
             'alumno',
             'alumno_nombre',
             'curso_nombre',
-            'nivel_nombre', 
+            'nivel_nombre',
             'horarios',
             'nota1',
             'nota2',
@@ -90,14 +103,14 @@ class NotaSerializer(serializers.ModelSerializer):
         if value < 0 or value > 20:
             raise serializers.ValidationError("La nota debe estar entre 0 y 20")
         return value
-    
+
     def get_horarios(self, obj):
         return [str(h) for h in obj.clase.horarios.all()]
-    
+
+
 # ------------------------------
 # Serializer para Registro de Alumno
 # ------------------------------
-    
 class AlumnoRegistroSerializer(serializers.ModelSerializer):
     class_id = serializers.IntegerField(write_only=True)
 
@@ -106,8 +119,7 @@ class AlumnoRegistroSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'password', 'first_name', 'last_name', 'email',
             'fecha_nacimiento', 'direccion', 'telefono', 'grupo_sanguineo',
-            'alergias',
-            'interesado', 'nuevo_creyente', 'bautizado', 'tiene_ministerio',
+            'alergias', 'interesado', 'nuevo_creyente', 'bautizado', 'tiene_ministerio',
             'class_id'
         ]
         extra_kwargs = {
@@ -132,10 +144,10 @@ class AlumnoRegistroSerializer(serializers.ModelSerializer):
 
         return user
 
+
 # ------------------------------
 # Serializer para Buscar Alumno
 # ------------------------------
-
 class UsuarioSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.SerializerMethodField()
 
@@ -145,15 +157,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     def get_nombre_completo(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()
-    
-# ------------------------------
-# Serializer para Profesor Ve e Imprime Datos de Alumno
-# ------------------------------
 
-from rest_framework import serializers
-from datetime import date
-from .models import Usuario
 
+# ------------------------------
+# Serializer para Detalle del Alumno
+# ------------------------------
 class AlumnoDetalleSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.SerializerMethodField()
     edad = serializers.SerializerMethodField()
@@ -176,7 +184,7 @@ class AlumnoDetalleSerializer(serializers.ModelSerializer):
         ]
 
     def get_nombre_completo(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
+        return f"{obj.first_name} {obj.last_name}".strip()
 
     def get_edad(self, obj):
         if obj.fecha_nacimiento:
