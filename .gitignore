@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+
+# Django
+*.sqlite3
+/staticfiles/
+/media/
+.env
+.env.*
+*.log
+
+# VSCode/IDE
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Migrations (opcional, si no quieres subir archivos generados)
+# */migrations/*.pyc
+# */migrations/*.pyo
+# */migrations/__pycache__/
