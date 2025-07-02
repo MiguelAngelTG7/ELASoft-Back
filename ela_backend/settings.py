@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure--50g@2o$8*^bz+#zd*d*s%-q0*+#12-y6f46_*3%r5tgp@arbp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['elasoft-back.onrender.com']
 
 
 # Application definition
