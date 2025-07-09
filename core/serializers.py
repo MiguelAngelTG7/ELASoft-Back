@@ -163,7 +163,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 
 # ------------------------------
-# Serializer para Detalle del Alumno
+# Serializer para Lista del Alumno
 # ------------------------------
 class AlumnoDetalleSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.SerializerMethodField()
@@ -196,3 +196,54 @@ class AlumnoDetalleSerializer(serializers.ModelSerializer):
                 (today.month, today.day) < (obj.fecha_nacimiento.month, obj.fecha_nacimiento.day)
             )
         return None
+
+# ------------------------------
+# Serializer para Lista de Profesores
+# ------------------------------
+
+class ProfesorListaSerializer(serializers.ModelSerializer):
+    nombre_completo = serializers.SerializerMethodField()
+    edad = serializers.SerializerMethodField()
+    cursos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            'id',
+            'nombre_completo',
+            'cursos',
+            'fecha_nacimiento',
+            'edad',
+            'email',
+            'telefono',
+            'direccion',
+        ]
+
+    def get_nombre_completo(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+    def get_edad(self, obj):
+        if obj.fecha_nacimiento:
+            today = date.today()
+            return today.year - obj.fecha_nacimiento.year - (
+                (today.month, today.day) < (obj.fecha_nacimiento.month, obj.fecha_nacimiento.day)
+            )
+        return None
+
+    def get_cursos(self, obj):
+        # Clases donde es titular
+        clases_titular = Clase.objects.filter(profesor_titular=obj)
+        # Clases donde es asistente
+        clases_asistente = Clase.objects.filter(profesor_asistente=obj)
+
+        cursos = []
+
+        for clase in clases_titular:
+            cursos.append(f"{clase.nombre} (Titular, Nivel: {clase.nivel.nombre})")
+
+        for clase in clases_asistente:
+            if clase not in clases_titular:
+                cursos.append(f"{clase.nombre} (Asistente, Nivel: {clase.nivel.nombre})")
+
+        return cursos
+

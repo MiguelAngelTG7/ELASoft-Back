@@ -20,6 +20,8 @@ from .views import (
     listar_clases_profesor,
     remover_alumno_de_clase,
     reporte_asistencia_clase,
+    lista_profesores_director,
+    listar_periodos
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -62,13 +64,16 @@ urlpatterns = [
     path('director/alumnos/', alumnos_para_director, name='alumnos-para-director'),
 
     # Listados para filtros del director
-    path('director/profesores/', listar_profesores, name='listar_profesores'),
-    path('director/horarios/', listar_horarios, name='listar_horarios'),
-    path('director/niveles/', listar_niveles, name='listar_niveles'),
+    #path('director/profesores/', listar_profesores, name='listar_profesores'),
+    #path('director/horarios/', listar_horarios, name='listar_horarios'),
+    #path('director/niveles/', listar_niveles, name='listar_niveles'),
     path('director/clases/', listar_clases, name='listar_clases'),
 
     path('profesor/clases/', listar_clases_profesor, name='listar_clases_profesor'),
     path('clases/<int:clase_id>/reporte-asistencia/', reporte_asistencia_clase, name='reporte_asistencia_clase'),
+
+    path('director/profesores/', lista_profesores_director),
+    path('director/periodos/', listar_periodos, name='listar_periodos'),
 ]
 
 if settings.DEBUG:

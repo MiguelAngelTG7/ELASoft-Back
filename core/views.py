@@ -3,9 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
-from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel
-from .serializers import ClaseProfesorSerializer, AsistenciaSerializer, NotaSerializer, AlumnoRegistroSerializer, UsuarioSerializer, AlumnoDetalleSerializer
-from django.utils import timezone
+from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel, PeriodoAcademico
+from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer
 from django.db.models import Q
 
 
@@ -214,9 +213,16 @@ def dashboard_alumno(request):
 @permission_classes([IsAuthenticated])
 def dashboard_director(request):
     director = request.user
-    # Traemos todos los cursos activos en clases actuales
-    clases = Clase.objects.filter(periodo__activo=True).distinct()
+    periodo_id = request.query_params.get('periodo_id')
+
+    # Filtrar por periodo si se proporciona, de lo contrario por periodos activos
+    if periodo_id:
+        clases = Clase.objects.filter(periodo_id=periodo_id).distinct()
+    else:
+        clases = Clase.objects.filter(periodo__activo=True).distinct()
+
     data = []
+
     for clase in clases:
         notas = Nota.objects.filter(clase=clase)
         total_alumnos = clase.alumnos.count()
@@ -225,17 +231,39 @@ def dashboard_director(request):
             sum(n.calcular_asistencia() for n in notas) / notas.count()
             if notas.exists() else 0
         )
+
+        # Construir objeto para profesor titular
+        if clase.profesor_titular:
+            titular_data = {
+                'id': clase.profesor_titular.id,
+                'nombre_completo': clase.profesor_titular.get_full_name()
+            }
+        else:
+            titular_data = None
+
+        # Construir objeto para profesor asistente
+        if clase.profesor_asistente:
+            asistente_data = {
+                'id': clase.profesor_asistente.id,
+                'nombre_completo': clase.profesor_asistente.get_full_name()
+            }
+        else:
+            asistente_data = None
+
         data.append({
             "curso": clase.nombre,
-            "nivel": clase.nivel.nombre,
-            "horarios": [str(h) for h in clase.horarios.all()],  
-            "periodo": clase.periodo.nombre,
+            "nivel": clase.nivel.nombre if clase.nivel else "—",
+            "horarios": [str(h) for h in clase.horarios.all()],
+            "periodo": clase.periodo.nombre if clase.periodo else "—",
+            "maestro_titular": titular_data,     # ahora es un objeto o null
+            "maestro_asistente": asistente_data, # ahora es un objeto o null
             "total_alumnos": total_alumnos,
             "alumnos_con_notas": notas.count(),
             "aprobados": aprobados,
             "porcentaje_aprobados": round((aprobados / total_alumnos * 100), 2) if total_alumnos else 0,
             "asistencia_promedio": round(asistencia_prom, 2)
         })
+
     return Response({"dashboard": data})
 
 # ----------------------------
@@ -465,12 +493,16 @@ def alumnos_para_director(request):
         "alumnos": serializer.data
     })
 
+# Listar todos los profesores (sin detalles de clases)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_profesores(request):
     profesores = Usuario.objects.filter(rol='profesor')
     data = [{"id": p.id, "full_name": p.get_full_name() or p.username} for p in profesores]
     return Response(data)
+
+# Listar todos los horarios (sin detalles de clases)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -479,12 +511,16 @@ def listar_horarios(request):
     data = [{"id": h.id, "dia": h.dia} for h in horarios]
     return Response(data)
 
+# Listar todos los niveles (sin detalles de clases)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_niveles(request):
     niveles = Nivel.objects.all()
     data = [{"id": n.id, "nombre": n.nombre} for n in niveles]
     return Response(data)
+
+# Listar todas las clases (con detalles de horarios, nivel y periodo)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -501,6 +537,8 @@ def listar_clases(request):
          })
     return Response(data)
 
+# Listar clases de un profesor (tanto titular como asistente)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_clases_profesor(request):
@@ -513,6 +551,8 @@ def listar_clases_profesor(request):
     clases = clases.distinct()
     serializer = ClaseProfesorSerializer(clases, many=True)
     return Response(serializer.data)
+
+# Reporte de asistencia de una clase
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -575,3 +615,29 @@ def reporte_asistencia_clase(request, clase_id):
         "total_ausentes": total_ausentes,
         "total_alumnos": alumnos.count(),
     })
+
+# Lista de profesores para el director
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def lista_profesores_director(request):
+    if request.user.rol != 'director':
+       return Response({"profesores": []}, status=403)
+    periodo_id = request.query_params.get('periodo_id')
+    if not periodo_id:
+        return Response({"profesores": []}, status=200)
+    profesores_ids_titular = list(Clase.objects.filter(periodo_id=periodo_id).values_list('profesor_titular', flat=True))
+    profesores_ids_asistente = list(Clase.objects.filter(periodo_id=periodo_id).values_list('profesor_asistente', flat=True))
+    profesores_ids = profesores_ids_titular + profesores_ids_asistente
+    profesores = Usuario.objects.filter(id__in=profesores_ids, rol='profesor').distinct()
+    serializer = ProfesorListaSerializer(profesores, many=True)
+    return Response({"profesores": serializer.data})
+
+# Perido académico: listar todos los periodos
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_periodos(request):
+    periodos = PeriodoAcademico.objects.all().order_by('-id')
+    data = [{"id": p.id, "nombre": p.nombre} for p in periodos]
+    return Response({"periodos": data})
