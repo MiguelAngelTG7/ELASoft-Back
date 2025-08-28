@@ -64,13 +64,8 @@ class AsistenciaSerializer(serializers.ModelSerializer):
         fields = ['id', 'alumno', 'alumno_nombre', 'clase', 'fecha', 'presente']
 
     def get_alumno_nombre(self, obj):
-        # Obtén nombre y apellido del usuario
-        nombre = obj.alumno.first_name or ""
-        apellido = obj.alumno.last_name or ""
-        nombre_completo = f"{nombre} {apellido}".strip()
-        
-        # Si no hay nombres definidos, usar el username como fallback
-        return nombre_completo if nombre_completo else obj.alumno.username
+        full_name = obj.alumno.get_full_name().strip()
+        return full_name if full_name else obj.alumno.username
 
 # ------------------------------
 # Serializer para Nota
