@@ -64,7 +64,7 @@ class AsistenciaSerializer(serializers.ModelSerializer):
         fields = ['id', 'alumno', 'alumno_nombre', 'clase', 'fecha', 'presente']
 
     def get_alumno_nombre(self, obj):
-        full_name = obj.alumno.get_full_name().strip()
+        full_name = f"{obj.alumno.first_name} {obj.alumno.last_name}".strip()
         return full_name if full_name else obj.alumno.username
 
 # ------------------------------
