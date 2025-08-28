@@ -49,7 +49,7 @@ class ClaseProfesorSerializer(serializers.ModelSerializer):
         return f"{obj.nombre} — {periodo} ({horarios})"
 
     def get_horarios(self, obj):
-        return [h.get_dia_display() for h in obj.horarios.all()]
+        return [str(h) for h in obj.horarios.all()]
 
 
 # ------------------------------
