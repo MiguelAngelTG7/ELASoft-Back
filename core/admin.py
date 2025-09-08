@@ -1,12 +1,28 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 from .models import Nivel, Usuario, Horario, Clase, Asistencia, Nota, PeriodoAcademico, SesionClase
 
 admin.site.site_header = "ELASoft Admin"
 admin.site.site_title = "ELASoft Admin"
 admin.site.index_title = "Panel de Administración de ELASoft"
 
-class UsuarioAdmin(UserAdmin):
+# 1. Crea un Resource para Usuario
+class UsuarioResource(resources.ModelResource):
+    class Meta:
+        model = Usuario
+        # Puedes especificar los campos si quieres, o dejarlo así para todos
+        # fields = ('id', 'username', 'email', 'rol', ...)
+
+# 2. Registra el modelo con ImportExportModelAdmin
+@admin.register(Usuario)
+class UsuarioAdmin(ImportExportModelAdmin, UserAdmin):
+    resource_class = UsuarioResource
+    list_display = ('username', 'email', 'first_name', 'last_name', 'rol', 'is_staff')
+    list_filter = ('rol', 'is_staff', 'is_superuser')
+    search_fields = ('username', 'first_name', 'last_name', 'email', 'telefono')
+
     fieldsets = UserAdmin.fieldsets + (
         ("Información adicional", {
             'fields': (
@@ -24,11 +40,6 @@ class UsuarioAdmin(UserAdmin):
         }),
     )
 
-    list_display = ('username', 'email', 'first_name', 'last_name', 'rol', 'is_staff')
-    list_filter = ('rol', 'is_staff', 'is_superuser')
-    search_fields = ('username', 'first_name', 'last_name', 'email', 'telefono')
-
-admin.site.register(Usuario, UsuarioAdmin)
 admin.site.register(Nivel)
 admin.site.register(Horario)
 
