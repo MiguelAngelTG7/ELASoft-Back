@@ -130,14 +130,13 @@ class Nota(models.Model):
     alumno = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'alumno'})
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
 
-    nota1 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
-    nota2 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
-    nota3 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
-    nota4 = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    participacion = models.DecimalField(max_digits=4, decimal_places=2, default=0)  # antes nota1
+    tareas = models.DecimalField(max_digits=4, decimal_places=2, default=0)         # antes nota2
+    examen_final = models.DecimalField(max_digits=4, decimal_places=2, default=0)   # antes nota3
 
     @property
     def promedio(self):
-        return round((self.nota1 + self.nota2 + self.nota3 + self.nota4) / 4, 2)
+        return round((self.participacion + self.tareas + self.examen_final) / 3, 2)
 
     def calcular_asistencia(self):
         total = self.clase.total_sesiones or 1
