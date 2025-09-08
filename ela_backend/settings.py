@@ -96,7 +96,6 @@ DATABASES = {
 
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -127,9 +126,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = '/static/'
@@ -146,6 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if os.environ.get('CORS_ALLOWED_ORIGINS') else [
     'http://localhost:5173',
+    'https://ela-soft-front.vercel.app',  
 ]
 
 REST_FRAMEWORK = {
