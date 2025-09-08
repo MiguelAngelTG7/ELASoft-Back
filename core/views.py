@@ -55,7 +55,7 @@ def obtener_asistencia(request, clase_id):
     for alumno in alumnos:
         fila = {
             "alumno_id": alumno.id,
-            "alumno_nombre": alumno.username,
+            "alumno_nombre": alumno.get_full_name() or alumno.username,  # <--- Nombre completo o username si está vacío
             "asistencias": []
         }
         for fecha in fechas:
