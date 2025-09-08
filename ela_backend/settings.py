@@ -140,9 +140,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS seguro para producción
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if os.environ.get('CORS_ALLOWED_ORIGINS') else [
+CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
-    'https://ela-soft-front.vercel.app',  
+    'https://ela-soft-front.vercel.app',
 ]
 
 REST_FRAMEWORK = {
