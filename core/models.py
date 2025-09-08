@@ -148,7 +148,8 @@ class Nota(models.Model):
 
     def estado_aprobacion(self):
         asistencia = self.calcular_asistencia()
-        return "Aprobado" if self.promedio >= 10.5 and asistencia >= 75 else "Desaprobado"
+        # Cambiado: nota mínima 14 y asistencia mínima 75%
+        return "Aprobado" if self.promedio >= 14 and asistencia >= 75 else "Desaprobado"
 
     def __str__(self):
         return f"{self.alumno.username} - Prom: {self.promedio} - Asist: {self.calcular_asistencia()}% - {self.estado_aprobacion()}"
