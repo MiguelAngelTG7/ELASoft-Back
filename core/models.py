@@ -123,7 +123,7 @@ class Asistencia(models.Model):
 
 
 # -----------------------------
-# NOTAS
+# makegrS
 # -----------------------------
 
 class Nota(models.Model):
