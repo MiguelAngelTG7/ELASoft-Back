@@ -133,10 +133,9 @@ def notas_por_clase(request, clase_id):
             resultado = {
                 "alumno_id": alumno.id,
                 "alumno_nombre": f"{alumno.first_name} {alumno.last_name}",
-                "nota1": nota.nota1 if nota else 0,
-                "nota2": nota.nota2 if nota else 0,
-                "nota3": nota.nota3 if nota else 0,
-                "nota4": nota.nota4 if nota else 0,
+                "participacion": nota.participacion if nota else 0,
+                "tareas": nota.tareas if nota else 0,
+                "examen_final": nota.examen_final if nota else 0,
                 "promedio": nota.promedio if nota else 0,
                 "asistencia_pct": nota.calcular_asistencia() if nota else 0,
                 "estado": nota.estado_aprobacion() if nota else "Sin notas",
@@ -149,7 +148,6 @@ def notas_por_clase(request, clase_id):
         return Response(resultados)
 
     elif request.method == 'POST':
-        # Permitir que venga como {"notas": [...] } o como lista directa
         notas_data = request.data.get("notas") or request.data
 
         if not isinstance(notas_data, list) or not notas_data:
@@ -161,19 +159,17 @@ def notas_por_clase(request, clase_id):
             try:
                 alumno_id = nota_data["alumno_id"]
 
-                nota1 = float(nota_data.get("nota1") or 0)
-                nota2 = float(nota_data.get("nota2") or 0)
-                nota3 = float(nota_data.get("nota3") or 0)
-                nota4 = float(nota_data.get("nota4") or 0)
+                participacion = float(nota_data.get("participacion") or 0)
+                tareas = float(nota_data.get("tareas") or 0)
+                examen_final = float(nota_data.get("examen_final") or 0)
 
                 Nota.objects.update_or_create(
                     clase_id=clase_id,
                     alumno_id=alumno_id,
                     defaults={
-                        "nota1": nota1,
-                        "nota2": nota2,
-                        "nota3": nota3,
-                        "nota4": nota4,
+                        "participacion": participacion,
+                        "tareas": tareas,
+                        "examen_final": examen_final,
                     }
                 )
             except Exception as e:
@@ -344,19 +340,17 @@ def asignar_alumno_a_clase(request, clase_id):
         if alumno in clase.alumnos.all():
             return Response({"message": "El alumno ya está asignado a esta clase."}, status=status.HTTP_200_OK)
 
-        # ✅ Asignar alumno a clase
         clase.alumnos.add(alumno)
 
-        # ✅ Crear registro de notas si no existe
+        # Crear registro de notas si no existe
         nota_existente = Nota.objects.filter(clase=clase, alumno=alumno).exists()
         if not nota_existente:
             Nota.objects.create(
                 clase=clase,
                 alumno=alumno,
-                nota1=0,
-                nota2=0,
-                nota3=0,
-                nota4=0,
+                participacion=0,
+                tareas=0,
+                examen_final=0,
             )
 
         return Response({"message": "Alumno asignado correctamente."}, status=status.HTTP_200_OK)

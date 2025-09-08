@@ -89,10 +89,9 @@ class NotaSerializer(serializers.ModelSerializer):
             'curso_nombre',
             'nivel_nombre',
             'horarios',
-            'nota1',
-            'nota2',
-            'nota3',
-            'nota4',
+            'participacion',
+            'tareas',
+            'examen_final',
             'promedio',
             'estado',
             'asistencia_pct',
@@ -104,7 +103,17 @@ class NotaSerializer(serializers.ModelSerializer):
     def get_estado(self, obj):
         return obj.estado_aprobacion()
 
-    def validate_nota1(self, value):
+    def validate_participacion(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La nota debe estar entre 0 y 20")
+        return value
+
+    def validate_tareas(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La nota debe estar entre 0 y 20")
+        return value
+
+    def validate_examen_final(self, value):
         if value < 0 or value > 20:
             raise serializers.ValidationError("La nota debe estar entre 0 y 20")
         return value
