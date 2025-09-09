@@ -17,6 +17,10 @@ def usuario_actual(request):
     return Response({
         "usuario": request.user.username,
         "rol": request.user.rol,
+        "first_name": request.user.first_name,
+        "last_name": request.user.last_name,
+        "email": request.user.email,
+        "id": request.user.id,
     })
 
 
