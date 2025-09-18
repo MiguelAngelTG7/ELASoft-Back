@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel, PeriodoAcademico
-from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer, ProfesorReporteSerializer
+from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer
 from django.db.models import Q
 
 
@@ -675,21 +675,3 @@ def listar_clases_por_periodo(request):
         for c in clases
     ]
     return Response(data)
-
-# ----------------------------
-# Nueva Vista: Reporte de Profesores para Director
-# ----------------------------
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def reporte_profesores_director(request):
-    if request.user.rol != 'director':
-        return Response({"detail": "No autorizado"}, status=403)
-    periodo_id = request.query_params.get('periodo_id')
-    if not periodo_id:
-        return Response({"profesores": []})
-    clases = Clase.objects.filter(periodo_id=periodo_id)
-    profesores_ids = list(clases.values_list('profesor_titular', flat=True)) + list(clases.values_list('profesor_asistente', flat=True))
-    profesores = Usuario.objects.filter(id__in=profesores_ids, rol='profesor').distinct()
-    serializer = ProfesorReporteSerializer(profesores, context={'clases': clases}, many=True)
-    return Response({"profesores": serializer.data})

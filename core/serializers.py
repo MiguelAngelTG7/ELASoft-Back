@@ -250,28 +250,3 @@ class ProfesorListaSerializer(serializers.ModelSerializer):
 
         return cursos
 
-# ------------------------------
-# Serializer para Reporte de Profesores
-# ------------------------------
-
-class ProfesorReporteSerializer(serializers.ModelSerializer):
-    cursos = serializers.SerializerMethodField()
-    class Meta:
-        model = Usuario
-        fields = ['id', 'nombre_completo', 'email', 'telefono', 'direccion', 'cursos']
-
-    def get_nombre_completo(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip()
-
-    def get_cursos(self, obj):
-        clases = self.context.get('clases', [])
-        titular = [c for c in clases if c.profesor_titular_id == obj.id]
-        asistente = [c for c in clases if c.profesor_asistente_id == obj.id]
-        cursos = []
-        for c in titular:
-            cursos.append(f"{c.nombre} (Titular, Nivel: {c.nivel.nombre})")
-        for c in asistente:
-            if c not in titular:
-                cursos.append(f"{c.nombre} (Asistente, Nivel: {c.nivel.nombre})")
-        return cursos
-
