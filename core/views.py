@@ -636,9 +636,16 @@ def lista_profesores_director(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_periodos(request):
-    periodos = PeriodoAcademico.objects.all().order_by('-fecha_inicio')
+    periodos = PeriodoAcademico.objects.all()
     data = [
-        {"id": p.id, "nombre": p.nombre}
+        {
+            "id": p.id,
+            "nombre": p.nombre,
+            "anio": p.anio,
+            "fecha_inicio": p.fecha_inicio,
+            "fecha_fin": p.fecha_fin,
+            "activo": p.activo,
+        }
         for p in periodos
     ]
     return Response(data)
