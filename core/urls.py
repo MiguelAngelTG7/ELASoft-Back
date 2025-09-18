@@ -23,7 +23,6 @@ from .views import (
     lista_profesores_director,
     listar_periodos,
     director_crear_alumno,
-    reporte_profesores_director
 )
 from django.conf import settings
 from django.conf.urls.static import static
