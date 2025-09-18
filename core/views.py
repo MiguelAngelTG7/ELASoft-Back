@@ -639,3 +639,19 @@ def listar_periodos(request):
     periodos = PeriodoAcademico.objects.all().order_by('-id')
     data = [{"id": p.id, "nombre": p.nombre} for p in periodos]
     return Response({"periodos": data})
+
+# ----------------------------
+# Nueva Vista: Crear Alumno (solo Director)
+# ----------------------------
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def director_crear_alumno(request):
+    # Solo permitir si el usuario es director
+    if request.user.rol != 'director':
+        return Response({'detail': 'No autorizado'}, status=403)
+    serializer = AlumnoRegistroSerializer(data=request.data)
+    if serializer.is_valid():
+        alumno = serializer.save()
+        return Response({'detail': 'Alumno creado', 'id': alumno.id})
+    return Response(serializer.errors, status=400)

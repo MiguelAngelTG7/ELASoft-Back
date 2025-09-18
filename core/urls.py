@@ -21,7 +21,8 @@ from .views import (
     remover_alumno_de_clase,
     reporte_asistencia_clase,
     lista_profesores_director,
-    listar_periodos
+    listar_periodos,
+    director_crear_alumno
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -53,6 +54,7 @@ urlpatterns = [
     # Registro y creación de alumnos
     path('profesor/registrar-alumno/', RegistrarAlumnoAPIView.as_view(), name='registrar-alumno'),
     path('profesor/crear-alumno/', crear_alumno, name='crear_alumno'),
+    path('director/crear-alumno/', director_crear_alumno, name='director_crear_alumno'),
 
     # Gestión de alumnos existentes
     path('alumnos/buscar/', buscar_alumnos, name='buscar_alumnos'),
