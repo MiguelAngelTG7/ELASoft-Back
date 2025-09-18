@@ -636,9 +636,12 @@ def lista_profesores_director(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_periodos(request):
-    periodos = PeriodoAcademico.objects.all().order_by('-id')
-    data = [{"id": p.id, "nombre": p.nombre} for p in periodos]
-    return Response({"periodos": data})
+    periodos = PeriodoAcademico.objects.all().order_by('-fecha_inicio')
+    data = [
+        {"id": p.id, "nombre": p.nombre}
+        for p in periodos
+    ]
+    return Response(data)
 
 # ----------------------------
 # Nueva Vista: Crear Alumno (solo Director)
@@ -655,3 +658,20 @@ def director_crear_alumno(request):
         alumno = serializer.save()
         return Response({'detail': 'Alumno creado', 'id': alumno.id})
     return Response(serializer.errors, status=400)
+
+# ----------------------------
+# Nueva Vista: Listar Clases por Periodo
+# ----------------------------
+
+@api_view(['GET'])
+def listar_clases_por_periodo(request):
+    periodo_id = request.GET.get('periodo_id')
+    clases = Clase.objects.filter(periodo_id=periodo_id) if periodo_id else Clase.objects.none()
+    data = [
+        {
+            "id": c.id,
+            "nombre_completo": f"{c.nombre} ({c.nivel.nombre})",
+        }
+        for c in clases
+    ]
+    return Response(data)
