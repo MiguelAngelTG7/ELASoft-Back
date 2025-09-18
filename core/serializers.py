@@ -128,36 +128,26 @@ class NotaSerializer(serializers.ModelSerializer):
 # Serializer para Registro de Alumno
 # ------------------------------
 class AlumnoRegistroSerializer(serializers.ModelSerializer):
-    class_id = serializers.IntegerField(write_only=True)
+
 
     class Meta:
         model = Usuario
         fields = [
             'username', 'password', 'first_name', 'last_name', 'email',
             'fecha_nacimiento', 'direccion', 'telefono',
-            'interesado', 'nuevo_creyente', 'bautizado', 'tiene_ministerio',
-            'class_id'
+            'interesado', 'nuevo_creyente', 'bautizado', 'tiene_ministerio'
         ]
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 6}
         }
 
     def create(self, validated_data):
-        class_id = validated_data.pop('class_id')
         password = validated_data.pop('password')
-
         user = Usuario.objects.create_user(
             **validated_data,
             password=password,
             rol='alumno'
         )
-
-        try:
-            clase = Clase.objects.get(id=class_id)
-            clase.alumnos.add(user)
-        except Clase.DoesNotExist:
-            raise serializers.ValidationError({'class_id': 'Clase no encontrada'})
-
         return user
 
 
