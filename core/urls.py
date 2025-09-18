@@ -22,7 +22,8 @@ from .views import (
     reporte_asistencia_clase,
     lista_profesores_director,
     listar_periodos,
-    director_crear_alumno
+    director_crear_alumno,
+    reporte_profesores_director
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -77,6 +78,7 @@ urlpatterns = [
     path('director/profesores/', lista_profesores_director),
     path('director/periodos/', listar_periodos, name='listar_periodos'),
     path('periodos/', listar_periodos, name='listar_periodos'),
+    path('director/profesores-reporte/', reporte_profesores_director, name='reporte_profesores_director'),
 ]
 
 if settings.DEBUG:
