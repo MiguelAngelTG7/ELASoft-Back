@@ -78,7 +78,6 @@ urlpatterns = [
     path('director/profesores/', lista_profesores_director),
     path('director/periodos/', listar_periodos, name='listar_periodos'),
     path('periodos/', listar_periodos, name='listar_periodos'),
-    path('director/profesores-reporte/', reporte_profesores_director, name='reporte_profesores_director'),
 ]
 
 if settings.DEBUG:
