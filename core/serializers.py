@@ -79,6 +79,7 @@ class NotaSerializer(serializers.ModelSerializer):
     curso_nombre = serializers.CharField(source='clase.nombre', default='', read_only=True)
     nivel_nombre = serializers.CharField(source='clase.nivel.nombre', default='', read_only=True)
     horarios = serializers.SerializerMethodField()
+    clase_id = serializers.IntegerField(source='clase.id', read_only=True)
 
     class Meta:
         model = Nota
@@ -95,6 +96,7 @@ class NotaSerializer(serializers.ModelSerializer):
             'promedio',
             'estado',
             'asistencia_pct',
+            'clase_id',
         ]
 
     def get_asistencia_pct(self, obj):
