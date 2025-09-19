@@ -8,21 +8,17 @@ admin.site.site_header = "ELASoft Admin"
 admin.site.site_title = "ELASoft Admin"
 admin.site.index_title = "Panel de Administración de ELASoft"
 
-# 1. Crea un Resource para Usuario
+# Usuario admin
 class UsuarioResource(resources.ModelResource):
     class Meta:
         model = Usuario
-        # Puedes especificar los campos si quieres, o dejarlo así para todos
-        # fields = ('id', 'username', 'email', 'rol', ...)
 
-# 2. Registra el modelo con ImportExportModelAdmin
 @admin.register(Usuario)
 class UsuarioAdmin(ImportExportModelAdmin, UserAdmin):
     resource_class = UsuarioResource
     list_display = ('username', 'email', 'first_name', 'last_name', 'rol', 'is_staff')
     list_filter = ('rol', 'is_staff', 'is_superuser')
     search_fields = ('username', 'first_name', 'last_name', 'email', 'telefono')
-
     fieldsets = UserAdmin.fieldsets + (
         ("Información adicional", {
             'fields': (
@@ -47,9 +43,10 @@ class SesionClaseInline(admin.TabularInline):
     model = SesionClase
     extra = 1
 
+# SOLO UNA VEZ: Clase admin personalizado con ID visible
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "nivel", "periodo", "total_sesiones")
+    list_display = ('id', 'nombre', 'nivel', 'periodo', 'total_sesiones')
     search_fields = ("nombre",)
     list_filter = ("nivel", "periodo")
     fieldsets = (
@@ -67,8 +64,3 @@ class RecursoCursoAdmin(admin.ModelAdmin):
     list_display = ('id', 'titulo', 'clase', 'tipo', 'url', 'fecha')
 
 admin.site.register(RecursoCurso, RecursoCursoAdmin)
-
-class ClaseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'nivel', 'periodo', 'total_sesiones')
-
-admin.site.register(Clase, ClaseAdmin)
