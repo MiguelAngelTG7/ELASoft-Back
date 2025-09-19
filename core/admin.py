@@ -67,3 +67,11 @@ class RecursoCursoAdmin(admin.ModelAdmin):
     list_display = ('id', 'titulo', 'clase', 'tipo', 'url', 'fecha')
 
 admin.site.register(RecursoCurso, RecursoCursoAdmin)
+
+from django.contrib import admin
+from .models import Clase
+
+class ClaseAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'nivel', 'periodo', 'profesor_titular')
+
+admin.site.register(Clase, ClaseAdmin)
