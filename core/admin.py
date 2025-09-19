@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-from .models import Nivel, Usuario, Horario, Clase, Asistencia, Nota, PeriodoAcademico, SesionClase
+from .models import Nivel, Usuario, Horario, Clase, Asistencia, Nota, PeriodoAcademico, SesionClase, RecursoCurso
 
 admin.site.site_header = "ELASoft Admin"
 admin.site.site_title = "ELASoft Admin"
@@ -62,3 +62,4 @@ class ClaseAdmin(admin.ModelAdmin):
 admin.site.register(Asistencia)
 admin.site.register(Nota)
 admin.site.register(PeriodoAcademico)
+admin.site.register(RecursoCurso)
