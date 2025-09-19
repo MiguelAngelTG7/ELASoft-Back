@@ -699,7 +699,7 @@ def recursos_por_clase(request, clase_id):
         if request.user != clase.profesor_titular and request.user != clase.profesor_asistente:
             return Response({'detail': 'No autorizado'}, status=403)
         data = request.data.copy()
-        data['clase'] = clase_id  # <-- Asegura que el campo 'clase' se envía al serializer
+        data['clase'] = clase_id
         serializer = RecursoCursoSerializer(data=data)
         if serializer.is_valid():
             serializer.save()

@@ -258,5 +258,5 @@ class RecursoCursoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecursoCurso
         fields = ['id', 'titulo', 'url', 'tipo', 'fecha', 'clase']
-        # Si no quieres mostrar el campo 'clase' al listar, puedes omitirlo en fields
+        extra_kwargs = {'clase': {'write_only': True}}
 
