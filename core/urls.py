@@ -64,6 +64,7 @@ urlpatterns = [
 
     # Recursos por clase (profesor)
     path('profesor/recursos/<int:clase_id>/', recursos_por_clase, name='recursos_por_clase'),
+    path('alumno/recursos/<int:clase_id>/', recursos_por_clase, name='recursos_alumno_por_clase'),
 ]
 
 if settings.DEBUG:
