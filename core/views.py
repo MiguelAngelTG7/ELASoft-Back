@@ -694,10 +694,14 @@ def recursos_por_clase(request, clase_id):
         recursos = RecursoCurso.objects.filter(clase_id=clase_id)
         serializer = RecursoCursoSerializer(recursos, many=True)
         return Response(serializer.data)
+    if request.method == 'GET':
+        recursos = RecursoCurso.objects.filter(clase_id=clase_id)
+        serializer = RecursoCursoSerializer(recursos, many=True)
+        return Response(serializer.data)
     elif request.method == 'POST':
         clase = Clase.objects.get(id=clase_id)
         if request.user != clase.profesor_titular and request.user != clase.profesor_asistente:
-            return Response({'detail': 'No autorizado'}, status=403)
+            return Response({'error': 'No autorizado'}, status=403)
         data = request.data.copy()
         data['clase'] = clase_id
         serializer = RecursoCursoSerializer(data=data)
@@ -705,4 +709,18 @@ def recursos_por_clase(request, clase_id):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-    # PUT y DELETE para editar/eliminar recursos individuales (opcional)
+    elif request.method == 'DELETE':
+        # Eliminar recurso por ID recibido en body
+        recurso_id = request.data.get('id')
+        if not recurso_id:
+            return Response({'error': 'Falta el ID del recurso'}, status=400)
+        try:
+            recurso = RecursoCurso.objects.get(id=recurso_id, clase_id=clase_id)
+        except RecursoCurso.DoesNotExist:
+            return Response({'error': 'Recurso no encontrado'}, status=404)
+        # Verificar permisos
+        clase = recurso.clase
+        if request.user != clase.profesor_titular and request.user != clase.profesor_asistente:
+            return Response({'error': 'No autorizado'}, status=403)
+        recurso.delete()
+        return Response({'message': 'Recurso eliminado correctamente.'}, status=200)
