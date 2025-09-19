@@ -687,7 +687,7 @@ def listar_clases_por_periodo(request):
 # Nueva Vista: Recursos por Clase
 # ----------------------------
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def recursos_por_clase(request, clase_id):
     if request.method == 'GET':
@@ -705,3 +705,4 @@ def recursos_por_clase(request, clase_id):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+    # PUT y DELETE para editar/eliminar recursos individuales (opcional)

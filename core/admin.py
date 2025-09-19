@@ -62,4 +62,8 @@ class ClaseAdmin(admin.ModelAdmin):
 admin.site.register(Asistencia)
 admin.site.register(Nota)
 admin.site.register(PeriodoAcademico)
-admin.site.register(RecursoCurso)
+
+class RecursoCursoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'titulo', 'clase', 'tipo', 'url', 'fecha')
+
+admin.site.register(RecursoCurso, RecursoCursoAdmin)
