@@ -1,6 +1,6 @@
 from datetime import date
 from rest_framework import serializers
-from .models import Clase, Asistencia, Nota, Usuario
+from .models import Clase, Asistencia, Nota, Usuario, RecursoCurso
 
 # ------------------------------
 # Serializer para Clase del Profesor
@@ -249,4 +249,13 @@ class ProfesorListaSerializer(serializers.ModelSerializer):
                 cursos.append(f"{clase.nombre} (Asistente, Nivel: {clase.nivel.nombre})")
 
         return cursos
+
+# ------------------------------
+# Serializer para Recursos de Curso
+# ------------------------------
+
+class RecursoCursoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecursoCurso
+        fields = ['id', 'titulo', 'url', 'tipo', 'fecha']
 

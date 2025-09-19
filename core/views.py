@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
-from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel, PeriodoAcademico
-from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer
+from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel, PeriodoAcademico, RecursoCurso
+from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer, RecursoCursoSerializer
 from django.db.models import Q
 
 
@@ -682,3 +682,27 @@ def listar_clases_por_periodo(request):
         for c in clases
     ]
     return Response(data)
+
+# ----------------------------
+# Nueva Vista: Recursos por Clase
+# ----------------------------
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def recursos_por_clase(request, clase_id):
+    if request.method == 'GET':
+        recursos = RecursoCurso.objects.filter(clase_id=clase_id)
+        serializer = RecursoCursoSerializer(recursos, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        # Solo el profesor titular/asistente puede agregar recursos
+        clase = Clase.objects.get(id=clase_id)
+        if request.user != clase.profesor_titular and request.user != clase.profesor_asistente:
+            return Response({'detail': 'No autorizado'}, status=403)
+        data = request.data.copy()
+        data['clase'] = clase_id
+        serializer = RecursoCursoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)

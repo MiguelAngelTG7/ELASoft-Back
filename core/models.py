@@ -163,3 +163,18 @@ class SesionClase(models.Model):
 
     def __str__(self):
         return f"{self.clase.nombre} - {self.fecha}"
+
+
+# -----------------------------
+# RECURSO CURSO
+# -----------------------------
+
+class RecursoCurso(models.Model):
+    clase = models.ForeignKey('Clase', on_delete=models.CASCADE, related_name='recursos')
+    titulo = models.CharField(max_length=200)
+    url = models.URLField()
+    tipo = models.CharField(max_length=50, choices=[('video', 'Video'), ('archivo', 'Archivo'), ('otro', 'Otro')])
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.titulo} ({self.clase.nombre})"
