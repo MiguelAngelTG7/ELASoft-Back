@@ -257,5 +257,6 @@ class ProfesorListaSerializer(serializers.ModelSerializer):
 class RecursoCursoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecursoCurso
-        fields = ['id', 'titulo', 'url', 'tipo', 'fecha']
+        fields = ['id', 'titulo', 'url', 'tipo', 'fecha', 'clase']
+        # Si no quieres mostrar el campo 'clase' al listar, puedes omitirlo en fields
 

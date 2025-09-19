@@ -695,12 +695,11 @@ def recursos_por_clase(request, clase_id):
         serializer = RecursoCursoSerializer(recursos, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        # Solo el profesor titular/asistente puede agregar recursos
         clase = Clase.objects.get(id=clase_id)
         if request.user != clase.profesor_titular and request.user != clase.profesor_asistente:
             return Response({'detail': 'No autorizado'}, status=403)
         data = request.data.copy()
-        data['clase'] = clase_id
+        data['clase'] = clase_id  # <-- Asegura que el campo 'clase' se envía al serializer
         serializer = RecursoCursoSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
