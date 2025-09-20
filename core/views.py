@@ -77,7 +77,8 @@ def obtener_asistencia(request, clase_id):
 
     return Response({
         "fechas": [str(f) for f in fechas],
-        "alumnos": data
+        "alumnos": data,
+        "total_sesiones": clase.total_sesiones  # <-- agregado
     })
 
 
