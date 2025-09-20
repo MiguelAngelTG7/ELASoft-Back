@@ -98,10 +98,13 @@ class Clase(models.Model):
         related_name='clases_asistente', limit_choices_to={'rol': 'profesor'})
 
     alumnos = models.ManyToManyField(Usuario, limit_choices_to={'rol': 'alumno'}, blank=True)
-    total_sesiones = models.PositiveIntegerField(default=8)
 
     def __str__(self):
         return f"{self.nombre} — {self.nivel} ({self.periodo})"
+
+    def sesiones_count(self):
+        return self.sesiones.count()
+    sesiones_count.short_description = 'Sesiones'
 
 
 
@@ -139,11 +142,11 @@ class Nota(models.Model):
         return round((self.participacion + self.tareas + self.examen_final) / 3, 2)
 
     def calcular_asistencia(self):
-        total = self.clase.total_sesiones or 1
-        if total == 0:
+        total_sesiones = self.clase.sesiones.count()
+        if not total_sesiones or total_sesiones == 0:
             return 0
         presentes = Asistencia.objects.filter(clase=self.clase, alumno=self.alumno, presente=True).count()
-        porcentaje = round((presentes / total) * 100, 2)
+        porcentaje = round((presentes / total_sesiones) * 100, 2)
         return min(porcentaje, 100)
 
     def estado_aprobacion(self):
