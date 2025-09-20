@@ -143,7 +143,8 @@ class Nota(models.Model):
         if total == 0:
             return 0
         presentes = Asistencia.objects.filter(clase=self.clase, alumno=self.alumno, presente=True).count()
-        return round((presentes / total) * 100, 2)
+        porcentaje = round((presentes / total) * 100, 2)
+        return min(porcentaje, 100)
 
     def estado_aprobacion(self):
         asistencia = self.calcular_asistencia()
