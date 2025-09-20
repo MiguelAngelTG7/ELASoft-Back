@@ -46,7 +46,7 @@ class SesionClaseInline(admin.TabularInline):
 # Clase admin personalizado con ID visible y sesiones reales
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'nivel', 'periodo', 'get_sesiones_count')
+    list_display = ('id', 'nombre', 'nivel', 'periodo', 'sesiones_count')
     search_fields = ("nombre",)
     list_filter = ("nivel", "periodo")
     fieldsets = (
@@ -55,10 +55,6 @@ class ClaseAdmin(admin.ModelAdmin):
         }),
     )
     inlines = [SesionClaseInline]
-
-    def get_sesiones_count(self, obj):
-        return obj.sesiones.count()
-    get_sesiones_count.short_description = 'Sesiones'
 
 admin.site.register(Asistencia)
 admin.site.register(Nota)
