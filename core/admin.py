@@ -43,15 +43,15 @@ class SesionClaseInline(admin.TabularInline):
     model = SesionClase
     extra = 1
 
-# Clase admin personalizado con ID visible y sesiones reales
+# SOLO UNA VEZ: Clase admin personalizado con ID visible
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'nivel', 'periodo', 'sesiones_count')
+    list_display = ('id', 'nombre', 'nivel', 'periodo', 'total_sesiones')
     search_fields = ("nombre",)
     list_filter = ("nivel", "periodo")
     fieldsets = (
         (None, {
-            'fields': ('nombre', 'nivel', 'periodo', 'horarios', 'profesor_titular', 'profesor_asistente', 'alumnos')
+            'fields': ('nombre', 'nivel', 'periodo', 'horarios', 'profesor_titular', 'profesor_asistente', 'alumnos', 'total_sesiones')
         }),
     )
     inlines = [SesionClaseInline]
