@@ -3,10 +3,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
+from django.db.models import Q
 from .models import Clase, Asistencia, Nota, Usuario, Horario, Nivel, PeriodoAcademico, RecursoCurso
 from .serializers import ClaseProfesorSerializer, NotaSerializer, AlumnoRegistroSerializer, AlumnoDetalleSerializer, ProfesorListaSerializer, RecursoCursoSerializer
-from django.db.models import Q
-
 
 # ----------------------------
 # Vista 1: Usuario actual
@@ -725,3 +724,46 @@ def recursos_por_clase(request, clase_id):
             return Response({'error': 'No autorizado'}, status=403)
         recurso.delete()
         return Response({'message': 'Recurso eliminado correctamente.'}, status=200)
+
+# Buscar alumnos por nombre/apellido (para director)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def director_buscar_alumnos(request):
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+    periodo_id = request.query_params.get('periodo_id')
+    query = request.query_params.get('q', '')
+    alumnos = Usuario.objects.filter(
+        rol='alumno'
+    ).filter(
+        Q(first_name__icontains=query) | Q(last_name__icontains=query)
+    )
+    resultado = []
+    for alumno in alumnos:
+        resultado.append({
+            "id": alumno.id,
+            "nombre_completo": f"{alumno.first_name} {alumno.last_name}",
+            "email": alumno.email,
+        })
+    return Response(resultado)
+
+# Cursos de un alumno en un periodo académico
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def director_alumno_cursos(request):
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+    periodo_id = request.query_params.get('periodo_id')
+    alumno_id = request.query_params.get('alumno_id')
+    if not periodo_id or not alumno_id:
+        return Response({"error": "Faltan parámetros"}, status=400)
+    clases = Clase.objects.filter(periodo_id=periodo_id, alumnos__id=alumno_id)
+    data = []
+    for clase in clases:
+        data.append({
+            "id": clase.id,
+            "nombre": clase.nombre,
+            "nivel": clase.nivel.nombre if clase.nivel else "",
+            "horarios": [str(h) for h in clase.horarios.all()],
+        })
+    return Response(data)

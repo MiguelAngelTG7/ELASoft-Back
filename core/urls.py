@@ -20,6 +20,8 @@ from .views import (
     listar_periodos,
     director_crear_alumno,
     recursos_por_clase,
+    director_buscar_alumnos,
+    director_alumno_cursos,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -65,6 +67,10 @@ urlpatterns = [
     # Recursos por clase (profesor)
     path('profesor/recursos/<int:clase_id>/', recursos_por_clase, name='recursos_por_clase'),
     path('alumno/recursos/<int:clase_id>/', recursos_por_clase, name='recursos_alumno_por_clase'),
+
+    # Nuevas rutas para el director
+    path('director/alumnos/', director_buscar_alumnos, name='director_buscar_alumnos'),
+    path('director/alumno-cursos/', director_alumno_cursos, name='director_alumno_cursos'),
 ]
 
 if settings.DEBUG:
