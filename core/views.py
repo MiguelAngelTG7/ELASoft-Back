@@ -651,7 +651,7 @@ def listar_periodos(request):
     return Response(data)
 
 # ----------------------------
-# Nueva Vista: Crear Alumno (solo Director)
+# Nueva Vista: Crear Alumno (solo Director) - ACTUALIZADA
 # ----------------------------
 
 @api_view(['POST'])
@@ -660,10 +660,55 @@ def director_crear_alumno(request):
     # Solo permitir si el usuario es director
     if request.user.rol != 'director':
         return Response({'detail': 'No autorizado'}, status=403)
+    
+    # Extraer datos del alumno y cursos seleccionados
+    cursos_ids = request.data.pop('cursos', [])  # Lista de IDs de cursos
+    
     serializer = AlumnoRegistroSerializer(data=request.data)
     if serializer.is_valid():
         alumno = serializer.save()
-        return Response({'detail': 'Alumno creado', 'id': alumno.id})
+        
+        # Asignar cursos seleccionados
+        cursos_asignados = []
+        if cursos_ids:
+            for curso_id in cursos_ids:
+                try:
+                    clase = Clase.objects.get(id=curso_id)
+                    
+                    # Verificar si el alumno ya está asignado
+                    if alumno not in clase.alumnos.all():
+                        clase.alumnos.add(alumno)
+                        
+                        # Crear registro de notas si no existe
+                        nota_existente = Nota.objects.filter(clase=clase, alumno=alumno).exists()
+                        if not nota_existente:
+                            Nota.objects.create(
+                                clase=clase,
+                                alumno=alumno,
+                                participacion=0,
+                                tareas=0,
+                                examen_final=0,
+                            )
+                        
+                        cursos_asignados.append({
+                            'id': clase.id,
+                            'nombre': clase.nombre,
+                            'nivel': clase.nivel.nombre if clase.nivel else ''
+                        })
+                        
+                except Clase.DoesNotExist:
+                    continue
+        
+        return Response({
+            'detail': 'Alumno creado exitosamente',
+            'alumno': {
+                'id': alumno.id,
+                'username': alumno.username,
+                'nombre_completo': f"{alumno.first_name} {alumno.last_name}"
+            },
+            'cursos_asignados': cursos_asignados
+        }, status=201)
+    
     return Response(serializer.errors, status=400)
 
 # ----------------------------
@@ -767,3 +812,36 @@ def director_alumno_cursos(request):
             "horarios": [str(h) for h in clase.horarios.all()],
         })
     return Response(data)
+
+# ----------------------------
+# Vista: Director obtiene clases de un periodo (para asignar alumnos)
+# ----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def director_clases_periodo(request):
+    """
+    Devuelve todas las clases de un periodo académico específico
+    para que el director pueda asignar alumnos
+    """
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+    
+    periodo_id = request.query_params.get('periodo_id')
+    if not periodo_id:
+        return Response({"error": "Falta parámetro periodo_id"}, status=400)
+    
+    try:
+        clases = Clase.objects.filter(periodo_id=periodo_id).select_related('nivel', 'periodo').prefetch_related('horarios')
+        data = []
+        for clase in clases:
+            data.append({
+                "id": clase.id,
+                "nombre": clase.nombre,
+                "nivel": clase.nivel.nombre if clase.nivel else "Sin nivel",
+                "horarios": [str(h) for h in clase.horarios.all()],
+                "total_alumnos": clase.alumnos.count(),
+                "profesor_titular": clase.profesor_titular.get_full_name() if clase.profesor_titular else "Sin asignar",
+            })
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

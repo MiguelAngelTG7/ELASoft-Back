@@ -22,6 +22,7 @@ from .views import (
     recursos_por_clase,
     director_buscar_alumnos,
     director_alumno_cursos,
+    director_clases_periodo,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -50,6 +51,7 @@ urlpatterns = [
     path('director/alumnos/', alumnos_para_director, name='alumnos-para-director'),
     path('director/clases/', listar_clases, name='listar_clases'),
     path('director/periodos/', listar_periodos, name='listar_periodos'),
+    path('director/clases-periodo/', director_clases_periodo, name='director_clases_periodo'),
 
     # path('profesor/registrar-alumno/', RegistrarAlumnoAPIView.as_view(), name='registrar-alumno'),
     path('profesor/crear-alumno/', crear_alumno, name='crear_alumno'),
