@@ -8,7 +8,7 @@ from .models import Clase, Asistencia, Nota, Usuario, RecursoCurso
 
 class ClaseProfesorSerializer(serializers.ModelSerializer):
     nombre = serializers.CharField()
-    periodo_nombre = serializers.CharField(source='periodo.nombre', default='', read_only=True)
+    periodo_nombre = serializers.CharField(source='clase.periodo.nombre', default='', read_only=True)
     nivel_nombre = serializers.CharField(source='nivel.nombre', default='', read_only=True)
     horarios = serializers.SerializerMethodField()
     profesor_titular = serializers.SerializerMethodField()
@@ -78,6 +78,7 @@ class NotaSerializer(serializers.ModelSerializer):
     asistencia_pct = serializers.SerializerMethodField()
     curso_nombre = serializers.CharField(source='clase.nombre', default='', read_only=True)
     nivel_nombre = serializers.CharField(source='clase.nivel.nombre', default='', read_only=True)
+    periodo_nombre = serializers.CharField(source='clase.periodo.nombre', default='', read_only=True)  # ← NUEVO CAMPO
     horarios = serializers.SerializerMethodField()
     clase_id = serializers.IntegerField(source='clase.id', read_only=True)
     profesor_nombre = serializers.SerializerMethodField()
@@ -91,6 +92,7 @@ class NotaSerializer(serializers.ModelSerializer):
             'alumno_nombre',
             'curso_nombre',
             'nivel_nombre',
+            'periodo_nombre',  # ← NUEVO CAMPO
             'horarios',
             'profesor_nombre',
             'profesor_telefono',
