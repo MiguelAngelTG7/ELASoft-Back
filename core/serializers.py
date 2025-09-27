@@ -80,6 +80,8 @@ class NotaSerializer(serializers.ModelSerializer):
     nivel_nombre = serializers.CharField(source='clase.nivel.nombre', default='', read_only=True)
     horarios = serializers.SerializerMethodField()
     clase_id = serializers.IntegerField(source='clase.id', read_only=True)
+    profesor_nombre = serializers.SerializerMethodField()
+    profesor_telefono = serializers.SerializerMethodField()
 
     class Meta:
         model = Nota
@@ -90,6 +92,8 @@ class NotaSerializer(serializers.ModelSerializer):
             'curso_nombre',
             'nivel_nombre',
             'horarios',
+            'profesor_nombre',
+            'profesor_telefono',
             'participacion',
             'tareas',
             'examen_final',
@@ -124,6 +128,16 @@ class NotaSerializer(serializers.ModelSerializer):
         if hasattr(obj.clase, 'horarios'):
             return [str(h) for h in obj.clase.horarios.all()]
         return []
+
+    def get_profesor_nombre(self, obj):
+        if obj.clase.profesor_titular:
+            return obj.clase.profesor_titular.get_full_name()
+        return '-'
+
+    def get_profesor_telefono(self, obj):
+        if obj.clase.profesor_titular and hasattr(obj.clase.profesor_titular, 'telefono'):
+            return obj.clase.profesor_titular.telefono or '-'
+        return '-'
 
 
 # ------------------------------
