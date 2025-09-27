@@ -173,7 +173,15 @@ class RecursoCurso(models.Model):
     clase = models.ForeignKey('Clase', on_delete=models.CASCADE, related_name='recursos')
     titulo = models.CharField(max_length=200)
     url = models.URLField()
-    tipo = models.CharField(max_length=50, choices=[('video', 'Video'), ('archivo', 'Archivo'), ('otro', 'Otro')])
+    tipo = models.CharField(max_length=50, choices=[
+        ('video', 'Video'),
+        ('audio_podcast', 'Audio Podcast'),
+        ('presentacion_ppt', 'Presentación PPT'),
+        ('documento_pdf_word', 'Documento PDF/WORD'),
+        ('imagen_infografia', 'Imagen Infografía'),
+        ('app', 'App'),
+        ('website_red_social', 'Website o Red Social')
+    ])
     fecha = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
