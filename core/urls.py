@@ -52,6 +52,8 @@ urlpatterns = [
     path('director/clases/', listar_clases, name='listar_clases'),
     path('director/periodos/', listar_periodos, name='listar_periodos'),
     path('director/clases-periodo/', director_clases_periodo, name='director_clases_periodo'),
+    path('director/profesores/', lista_profesores_director, name='lista_profesores_director'),
+
 
     # path('profesor/registrar-alumno/', RegistrarAlumnoAPIView.as_view(), name='registrar-alumno'),
     path('profesor/crear-alumno/', crear_alumno, name='crear_alumno'),
