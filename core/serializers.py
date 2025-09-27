@@ -237,18 +237,26 @@ class ProfesorListaSerializer(serializers.ModelSerializer):
 
     def get_cursos(self, obj):
         # Clases donde es titular
-        clases_titular = Clase.objects.filter(profesor_titular=obj)
+        clases_titular = Clase.objects.filter(profesor_titular=obj).prefetch_related('horarios')
         # Clases donde es asistente
-        clases_asistente = Clase.objects.filter(profesor_asistente=obj)
+        clases_asistente = Clase.objects.filter(profesor_asistente=obj).prefetch_related('horarios')
 
         cursos = []
 
         for clase in clases_titular:
-            cursos.append(f"{clase.nombre} (Titular, Nivel: {clase.nivel.nombre})")
+            horarios = ", ".join([str(h) for h in clase.horarios.all()])
+            if horarios:
+                cursos.append(f"{clase.nombre} ({horarios}) - Titular")
+            else:
+                cursos.append(f"{clase.nombre} - Titular")
 
         for clase in clases_asistente:
             if clase not in clases_titular:
-                cursos.append(f"{clase.nombre} (Asistente, Nivel: {clase.nivel.nombre})")
+                horarios = ", ".join([str(h) for h in clase.horarios.all()])
+                if horarios:
+                    cursos.append(f"{clase.nombre} ({horarios}) - Asistente")
+                else:
+                    cursos.append(f"{clase.nombre} - Asistente")
 
         return cursos
 
