@@ -153,6 +153,7 @@ class AlumnoRegistroSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'password', 'first_name', 'last_name', 'email',
             'fecha_nacimiento', 'direccion', 'telefono',
+            'enfermedades', 'medicamentos_y_dosis',
             'interesado', 'nuevo_creyente', 'bautizado', 'tiene_ministerio'
         ]
         extra_kwargs = {
@@ -201,6 +202,8 @@ class AlumnoDetalleSerializer(serializers.ModelSerializer):
             'email',
             'telefono',
             'direccion',
+            'enfermedades',
+            'medicamentos_y_dosis',
             'interesado',
             'nuevo_creyente',
             'bautizado',
