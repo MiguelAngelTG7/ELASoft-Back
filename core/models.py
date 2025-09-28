@@ -146,6 +146,10 @@ class Nota(models.Model):
         return round((presentes / total) * 100, 2)
 
     def estado_aprobacion(self):
+        # Verificar si todas las notas están completas (mayor que 0)
+        if self.participacion == 0 or self.tareas == 0 or self.examen_final == 0:
+            return "Pendiente"
+        
         asistencia = self.calcular_asistencia()
         # Cambiado: nota mínima 14 y asistencia mínima 75%
         return "Aprobado" if self.promedio >= 14 and asistencia >= 75 else "Desaprobado"
