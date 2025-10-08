@@ -130,13 +130,29 @@ class Nota(models.Model):
     alumno = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'alumno'})
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
 
-    participacion = models.DecimalField(max_digits=4, decimal_places=2, default=0)  # antes nota1
-    tareas = models.DecimalField(max_digits=4, decimal_places=2, default=0)         # antes nota2
-    examen_final = models.DecimalField(max_digits=4, decimal_places=2, default=0)   # antes nota3
+    # Participación dividida en tres partes
+    participacion_1 = models.DecimalField(max_digits=4, decimal_places=2, default=0)  # 13.33%
+    participacion_2 = models.DecimalField(max_digits=4, decimal_places=2, default=0)  # 13.33%
+    participacion_3 = models.DecimalField(max_digits=4, decimal_places=2, default=0)  # 13.34%
+    
+    tareas = models.DecimalField(max_digits=4, decimal_places=2, default=0)         # 40%
+    examen_final = models.DecimalField(max_digits=4, decimal_places=2, default=0)   # 20%
+
+    @property
+    def participacion_promedio(self):
+        """Calcula el promedio ponderado de las tres participaciones"""
+        peso_1 = 0.1333  # 13.33%
+        peso_2 = 0.1333  # 13.33%
+        peso_3 = 0.1334  # 13.34%
+        return round((self.participacion_1 * peso_1) + (self.participacion_2 * peso_2) + (self.participacion_3 * peso_3), 2)
 
     @property
     def promedio(self):
-        return round((self.participacion + self.tareas + self.examen_final) / 3, 2)
+        """Calcula el promedio final considerando los nuevos pesos"""
+        participacion_total = self.participacion_promedio
+        tareas_ponderado = self.tareas * 0.40  # 40%
+        examen_ponderado = self.examen_final * 0.20  # 20%
+        return round(participacion_total + tareas_ponderado + examen_ponderado, 2)
 
     def calcular_asistencia(self):
         total = self.clase.total_sesiones or 1
@@ -147,11 +163,11 @@ class Nota(models.Model):
 
     def estado_aprobacion(self):
         # Verificar si todas las notas están completas (mayor que 0)
-        if self.participacion == 0 or self.tareas == 0 or self.examen_final == 0:
+        if (self.participacion_1 == 0 or self.participacion_2 == 0 or self.participacion_3 == 0 or 
+            self.tareas == 0 or self.examen_final == 0):
             return "Pendiente"
         
         asistencia = self.calcular_asistencia()
-        # Cambiado: nota mínima 14 y asistencia mínima 75%
         return "Aprobado" if self.promedio >= 14 and asistencia >= 75 else "Desaprobado"
 
     def __str__(self):

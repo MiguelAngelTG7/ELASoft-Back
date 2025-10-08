@@ -74,11 +74,12 @@ class AsistenciaSerializer(serializers.ModelSerializer):
 class NotaSerializer(serializers.ModelSerializer):
     alumno_nombre = serializers.CharField(source='alumno.username', read_only=True)
     promedio = serializers.FloatField(read_only=True)
+    participacion_promedio = serializers.FloatField(read_only=True)  # Nuevo campo
     estado = serializers.SerializerMethodField()
     asistencia_pct = serializers.SerializerMethodField()
     curso_nombre = serializers.CharField(source='clase.nombre', default='', read_only=True)
     nivel_nombre = serializers.CharField(source='clase.nivel.nombre', default='', read_only=True)
-    periodo_nombre = serializers.CharField(source='clase.periodo.nombre', default='', read_only=True)  # ← NUEVO CAMPO
+    periodo_nombre = serializers.CharField(source='clase.periodo.nombre', default='', read_only=True)
     horarios = serializers.SerializerMethodField()
     clase_id = serializers.IntegerField(source='clase.id', read_only=True)
     profesor_nombre = serializers.SerializerMethodField()
@@ -92,11 +93,14 @@ class NotaSerializer(serializers.ModelSerializer):
             'alumno_nombre',
             'curso_nombre',
             'nivel_nombre',
-            'periodo_nombre',  # ← NUEVO CAMPO
+            'periodo_nombre',
             'horarios',
             'profesor_nombre',
             'profesor_telefono',
-            'participacion',
+            'participacion_1',        # Nuevo campo
+            'participacion_2',        # Nuevo campo
+            'participacion_3',        # Nuevo campo
+            'participacion_promedio', # Nuevo campo calculado
             'tareas',
             'examen_final',
             'promedio',
@@ -111,7 +115,18 @@ class NotaSerializer(serializers.ModelSerializer):
     def get_estado(self, obj):
         return obj.estado_aprobacion()
 
-    def validate_participacion(self, value):
+    # Validaciones para las tres participaciones
+    def validate_participacion_1(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La nota debe estar entre 0 y 20")
+        return value
+
+    def validate_participacion_2(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La nota debe estar entre 0 y 20")
+        return value
+
+    def validate_participacion_3(self, value):
         if value < 0 or value > 20:
             raise serializers.ValidationError("La nota debe estar entre 0 y 20")
         return value
