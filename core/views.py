@@ -358,7 +358,9 @@ def asignar_alumno_a_clase(request, clase_id):
             Nota.objects.create(
                 clase=clase,
                 alumno=alumno,
-                participacion=0,
+                participacion_1=0,
+                participacion_2=0,
+                participacion_3=0,
                 tareas=0,
                 examen_final=0,
             )
@@ -691,7 +693,9 @@ def director_crear_alumno(request):
                             Nota.objects.create(
                                 clase=clase,
                                 alumno=alumno,
-                                participacion=0,
+                                participacion_1=0,
+                                participacion_2=0,
+                                participacion_3=0,
                                 tareas=0,
                                 examen_final=0,
                             )

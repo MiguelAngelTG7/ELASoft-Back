@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from datetime import date
+from decimal import Decimal
 
 # -----------------------------
 # MODELO DE USUARIO PERSONALIZADO
@@ -141,17 +142,17 @@ class Nota(models.Model):
     @property
     def participacion_promedio(self):
         """Calcula el promedio ponderado de las tres participaciones"""
-        peso_1 = 0.1333  # 13.33%
-        peso_2 = 0.1333  # 13.33%
-        peso_3 = 0.1334  # 13.34%
+        peso_1 = Decimal('0.1333')  # 13.33%
+        peso_2 = Decimal('0.1333')  # 13.33%
+        peso_3 = Decimal('0.1334')  # 13.34%
         return round((self.participacion_1 * peso_1) + (self.participacion_2 * peso_2) + (self.participacion_3 * peso_3), 2)
 
     @property
     def promedio(self):
         """Calcula el promedio final considerando los nuevos pesos"""
         participacion_total = self.participacion_promedio
-        tareas_ponderado = self.tareas * 0.40  # 40%
-        examen_ponderado = self.examen_final * 0.20  # 20%
+        tareas_ponderado = self.tareas * Decimal('0.40')  # 40%
+        examen_ponderado = self.examen_final * Decimal('0.20')  # 20%
         return round(participacion_total + tareas_ponderado + examen_ponderado, 2)
 
     def calcular_asistencia(self):
