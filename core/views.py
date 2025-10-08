@@ -137,7 +137,9 @@ def notas_por_clase(request, clase_id):
             resultado = {
                 "alumno_id": alumno.id,
                 "alumno_nombre": f"{alumno.first_name} {alumno.last_name}",
-                "participacion": nota.participacion if nota else 0,
+                "participacion_1": nota.participacion_1 if nota else 0,
+                "participacion_2": nota.participacion_2 if nota else 0,
+                "participacion_3": nota.participacion_3 if nota else 0,
                 "tareas": nota.tareas if nota else 0,
                 "examen_final": nota.examen_final if nota else 0,
                 "promedio": nota.promedio if nota else 0,
@@ -163,7 +165,9 @@ def notas_por_clase(request, clase_id):
             try:
                 alumno_id = nota_data["alumno_id"]
 
-                participacion = float(nota_data.get("participacion") or 0)
+                participacion_1 = float(nota_data.get("participacion_1") or 0)
+                participacion_2 = float(nota_data.get("participacion_2") or 0)
+                participacion_3 = float(nota_data.get("participacion_3") or 0)
                 tareas = float(nota_data.get("tareas") or 0)
                 examen_final = float(nota_data.get("examen_final") or 0)
 
@@ -171,7 +175,9 @@ def notas_por_clase(request, clase_id):
                     clase_id=clase_id,
                     alumno_id=alumno_id,
                     defaults={
-                        "participacion": participacion,
+                        "participacion_1": participacion_1,
+                        "participacion_2": participacion_2,
+                        "participacion_3": participacion_3,
                         "tareas": tareas,
                         "examen_final": examen_final,
                     }
