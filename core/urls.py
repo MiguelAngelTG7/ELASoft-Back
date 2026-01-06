@@ -23,6 +23,7 @@ from .views import (
     director_buscar_alumnos,
     director_alumno_cursos,
     director_clases_periodo,
+    director_alumno_cursos_todos_periodos,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -75,6 +76,7 @@ urlpatterns = [
     # Nuevas rutas para el director
     path('director/alumnos/', director_buscar_alumnos, name='director_buscar_alumnos'),
     path('director/alumno-cursos/', director_alumno_cursos, name='director_alumno_cursos'),
+    path('director/alumno-cursos-todos-periodos/', director_alumno_cursos_todos_periodos, name='director_alumno_cursos_todos_periodos'),
 ]
 
 if settings.DEBUG:

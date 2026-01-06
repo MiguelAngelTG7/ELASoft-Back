@@ -855,3 +855,37 @@ def director_clases_periodo(request):
         return Response(data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+# ----------------------------
+# Vista: Director obtiene TODOS los cursos de un alumno (todos los períodos)
+# ----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def director_alumno_cursos_todos_periodos(request):
+    """
+    Devuelve todos los cursos de un alumno en todos los períodos académicos
+    """
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+    
+    alumno_id = request.query_params.get('alumno_id')
+    if not alumno_id:
+        return Response({"error": "Falta parámetro alumno_id"}, status=400)
+    
+    try:
+        # Obtener todos los cursos del alumno sin filtrar por período
+        clases = Clase.objects.filter(alumnos__id=alumno_id).select_related('nivel', 'periodo').prefetch_related('horarios').order_by('periodo__fecha_inicio')
+        
+        data = []
+        for clase in clases:
+            data.append({
+                "id": clase.id,
+                "nombre": clase.nombre,
+                "nivel": clase.nivel.nombre if clase.nivel else "",
+                "horarios": [str(h) for h in clase.horarios.all()],
+                "periodo": clase.periodo.nombre if clase.periodo else "Sin período",
+                "periodo_id": clase.periodo.id if clase.periodo else None,
+            })
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
