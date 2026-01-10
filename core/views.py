@@ -812,16 +812,73 @@ def director_alumno_cursos(request):
     alumno_id = request.query_params.get('alumno_id')
     if not periodo_id or not alumno_id:
         return Response({"error": "Faltan parámetros"}, status=400)
-    clases = Clase.objects.filter(periodo_id=periodo_id, alumnos__id=alumno_id)
+    
+    clases = Clase.objects.filter(periodo_id=periodo_id, alumnos__id=alumno_id).select_related('nivel', 'periodo').prefetch_related('horarios')
+    
     data = []
     for clase in clases:
+        # Obtener la nota del alumno en esta clase
+        try:
+            nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
+            promedio = float(nota.promedio)
+            aprobado = promedio >= 14
+        except Nota.DoesNotExist:
+            promedio = 0.0
+            aprobado = False
+        
         data.append({
             "id": clase.id,
             "nombre": clase.nombre,
             "nivel": clase.nivel.nombre if clase.nivel else "",
             "horarios": [str(h) for h in clase.horarios.all()],
+            "periodo": clase.periodo.nombre if clase.periodo else "Sin período",
+            "promedio": promedio,
+            "aprobado": aprobado,
         })
     return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def director_alumno_cursos_todos_periodos(request):
+    """
+    Devuelve todos los cursos de un alumno en todos los períodos académicos
+    """
+    if request.user.rol != 'director':
+        return Response({"error": "No autorizado"}, status=403)
+    
+    alumno_id = request.query_params.get('alumno_id')
+    if not alumno_id:
+        return Response({"error": "Falta parámetro alumno_id"}, status=400)
+    
+    try:
+        # Obtener todos los cursos del alumno sin filtrar por período
+        clases = Clase.objects.filter(alumnos__id=alumno_id).select_related('nivel', 'periodo').prefetch_related('horarios').order_by('periodo__fecha_inicio')
+        
+        data = []
+        for clase in clases:
+            # Obtener la nota del alumno en esta clase
+            try:
+                nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
+                promedio = float(nota.promedio)
+                aprobado = promedio >= 14
+            except Nota.DoesNotExist:
+                promedio = 0.0
+                aprobado = False
+            
+            data.append({
+                "id": clase.id,
+                "nombre": clase.nombre,
+                "nivel": clase.nivel.nombre if clase.nivel else "",
+                "horarios": [str(h) for h in clase.horarios.all()],
+                "periodo": clase.periodo.nombre if clase.periodo else "Sin período",
+                "periodo_id": clase.periodo.id if clase.periodo else None,
+                "promedio": promedio,
+                "aprobado": aprobado,
+            })
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 # ----------------------------
 # Vista: Director obtiene clases de un periodo (para asignar alumnos)
@@ -878,6 +935,15 @@ def director_alumno_cursos_todos_periodos(request):
         
         data = []
         for clase in clases:
+            # Obtener la nota del alumno en esta clase
+            try:
+                nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
+                promedio = float(nota.promedio)
+                aprobado = promedio >= 14
+            except Nota.DoesNotExist:
+                promedio = 0.0
+                aprobado = False
+            
             data.append({
                 "id": clase.id,
                 "nombre": clase.nombre,
@@ -885,6 +951,8 @@ def director_alumno_cursos_todos_periodos(request):
                 "horarios": [str(h) for h in clase.horarios.all()],
                 "periodo": clase.periodo.nombre if clase.periodo else "Sin período",
                 "periodo_id": clase.periodo.id if clase.periodo else None,
+                "promedio": promedio,
+                "aprobado": aprobado,
             })
         return Response(data)
     except Exception as e:
