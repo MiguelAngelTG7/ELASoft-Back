@@ -446,7 +446,7 @@ def alumnos_del_profesor(request):
             clase = Clase.objects.get(id=clase_id)
             clase_info = {
                 "clase_nombre": clase.nombre,
-                "nivel": clase.nivel.nombre,
+                "nivel": clase.nivel.nombre if clase.nivel else "—",
                 "horarios": [str(h) for h in clase.horarios.all()],
             }
         except Clase.DoesNotExist:
@@ -965,9 +965,7 @@ def director_alumno_cursos_todos_periodos(request):
 @permission_classes([IsAuthenticated])
 def cursos_disponibles(request):
     """
-    Retorna cursos disponibles del período actual donde el alumno puede matricularse.
-    Filtra por: nivel del alumno + nivel superior, periodo activo, disponible=True
-    Excluye: cursos donde ya está matriculado
+    Retorna cursos disponibles del período activo para matricularse
     """
     try:
         alumno = request.user
@@ -977,31 +975,11 @@ def cursos_disponibles(request):
         if not periodo_activo:
             return Response({"cursos": [], "mensaje": "No hay periodo académico activo"})
         
-        # Obtener nivel del alumno (del primer curso donde esté matriculado)
-        nivel_alumno_obj = Clase.objects.filter(alumnos=alumno).values_list('nivel', flat=True).first()
-        
-        if not nivel_alumno_obj:
-            # Si no tiene nivel, retornar todos los cursos disponibles del periodo
-            cursos = Clase.objects.filter(
-                periodo=periodo_activo,
-                disponible=True
-            ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
-        else:
-            nivel_alumno = Nivel.objects.get(id=nivel_alumno_obj)
-            todos_niveles = Nivel.objects.all().order_by('id')
-            niveles_list = list(todos_niveles.values_list('id', flat=True))
-            indice_actual = niveles_list.index(nivel_alumno.id)
-            
-            # Nivel actual + siguiente nivel (si existe)
-            niveles_permitidos = [nivel_alumno.id]
-            if indice_actual + 1 < len(niveles_list):
-                niveles_permitidos.append(niveles_list[indice_actual + 1])
-            
-            cursos = Clase.objects.filter(
-                periodo=periodo_activo,
-                disponible=True,
-                nivel__id__in=niveles_permitidos
-            ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
+        # Obtener cursos disponibles del periodo activo que no esté matriculado
+        cursos = Clase.objects.filter(
+            periodo=periodo_activo,
+            disponible=True
+        ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
         
         data = []
         for curso in cursos:
@@ -1018,7 +996,6 @@ def cursos_disponibles(request):
         return Response({"cursos": data})
     except Exception as e:
         return Response({"error": str(e)}, status=400)
-
 
 # ----------------------------
 # Vista: Matricular alumno a curso
