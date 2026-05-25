@@ -989,3 +989,78 @@ def alumno_curso_matriculado(request):
         })
     except Exception as e:
         return Response({"error": str(e)}, status=400)
+
+# ----------------------------
+# Vista: Obtener cursos disponibles para matricularse
+# ----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cursos_disponibles(request):
+    """
+    Retorna TODOS los cursos disponibles (sin restricciones por ahora)
+    """
+    try:
+        alumno = request.user
+        
+        # Obtener cursos disponibles que NO esté matriculado
+        cursos = Clase.objects.filter(
+            disponible=True
+        ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
+        
+        data = []
+        for curso in cursos:
+            horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in curso.horarios.all()])
+            data.append({
+                'clase_id': curso.id,
+                'curso_nombre': curso.nombre,
+                'periodo_nombre': curso.periodo.nombre if curso.periodo else 'N/A',
+                'horarios': horarios_str or 'Sin horario',
+                'profesor_nombre': curso.profesor_titular.get_full_name() or curso.profesor_titular.username if curso.profesor_titular else 'N/A',
+                'profesor_telefono': curso.profesor_titular.telefono if curso.profesor_titular else 'N/A',
+            })
+        
+        return Response({"cursos": data})
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
+
+# ----------------------------
+# Vista: Matricular alumno a curso
+# ----------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def matricular_curso(request):
+    """
+    Matricula el alumno en un curso disponible.
+    Espera: { "clase_id": <id> }
+    """
+    try:
+        clase_id = request.data.get('clase_id')
+        alumno = request.user
+        clase = Clase.objects.get(id=clase_id)
+        
+        # Solo verificar disponible
+        if not clase.disponible:
+            return Response({"error": "Curso no disponible"}, status=400)
+        
+        # Solo verificar que no esté inscrito
+        if clase.alumnos.filter(id=alumno.id).exists():
+            return Response({"error": "Ya estás matriculado"}, status=400)
+        
+        # Agregar y crear nota
+        clase.alumnos.add(alumno)
+        Nota.objects.get_or_create(alumno=alumno, clase=clase)
+        
+        horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in clase.horarios.all()])
+        
+        return Response({
+            "mensaje": "¡Éxito!",
+            "curso": {
+                'clase_id': clase.id,
+                'curso_nombre': clase.nombre,
+                'horarios': horarios_str,
+                'profesor_nombre': clase.profesor_titular.get_full_name() or clase.profesor_titular.username if clase.profesor_titular else 'N/A',
+                'profesor_telefono': clase.profesor_titular.telefono if clase.profesor_titular else 'N/A',
+            }
+        })
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
