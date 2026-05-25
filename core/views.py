@@ -957,3 +957,120 @@ def director_alumno_cursos_todos_periodos(request):
         return Response(data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+# ----------------------------
+# Vista: Obtener cursos disponibles para matricularse
+# ----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cursos_disponibles(request):
+    """
+    Retorna cursos disponibles del período actual donde el alumno puede matricularse.
+    Filtra por: nivel del alumno + nivel superior, periodo activo, disponible=True
+    Excluye: cursos donde ya está matriculado
+    """
+    try:
+        alumno = request.user
+        
+        # Obtener periodo activo
+        periodo_activo = PeriodoAcademico.objects.filter(activo=True).first()
+        if not periodo_activo:
+            return Response({"cursos": [], "mensaje": "No hay periodo académico activo"})
+        
+        # Obtener nivel del alumno (del primer curso donde esté matriculado)
+        nivel_alumno_obj = Clase.objects.filter(alumnos=alumno).values_list('nivel', flat=True).first()
+        
+        if not nivel_alumno_obj:
+            # Si no tiene nivel, retornar todos los cursos disponibles del periodo
+            cursos = Clase.objects.filter(
+                periodo=periodo_activo,
+                disponible=True
+            ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
+        else:
+            nivel_alumno = Nivel.objects.get(id=nivel_alumno_obj)
+            todos_niveles = Nivel.objects.all().order_by('id')
+            niveles_list = list(todos_niveles.values_list('id', flat=True))
+            indice_actual = niveles_list.index(nivel_alumno.id)
+            
+            # Nivel actual + siguiente nivel (si existe)
+            niveles_permitidos = [nivel_alumno.id]
+            if indice_actual + 1 < len(niveles_list):
+                niveles_permitidos.append(niveles_list[indice_actual + 1])
+            
+            cursos = Clase.objects.filter(
+                periodo=periodo_activo,
+                disponible=True,
+                nivel__id__in=niveles_permitidos
+            ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
+        
+        data = []
+        for curso in cursos:
+            horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in curso.horarios.all()])
+            data.append({
+                'clase_id': curso.id,
+                'curso_nombre': curso.nombre,
+                'periodo_nombre': curso.periodo.nombre if curso.periodo else 'N/A',
+                'horarios': horarios_str or 'Sin horario',
+                'profesor_nombre': curso.profesor_titular.get_full_name() or curso.profesor_titular.username if curso.profesor_titular else 'N/A',
+                'profesor_telefono': curso.profesor_titular.telefono if curso.profesor_titular else 'N/A',
+            })
+        
+        return Response({"cursos": data})
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
+
+
+# ----------------------------
+# Vista: Matricular alumno a curso
+# ----------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def matricular_curso(request):
+    """
+    Matricula el alumno en un curso disponible.
+    Espera: { "clase_id": <id> }
+    """
+    try:
+        clase_id = request.data.get('clase_id')
+        if not clase_id:
+            return Response({"error": "clase_id requerido"}, status=400)
+        
+        alumno = request.user
+        clase = Clase.objects.get(id=clase_id)
+        
+        # Verificar que la clase esté disponible
+        if not clase.disponible:
+            return Response({"error": "Curso no disponible"}, status=400)
+        
+        # Verificar que no esté ya matriculado
+        if clase.alumnos.filter(id=alumno.id).exists():
+            return Response({"error": "Ya estás matriculado en este curso"}, status=400)
+        
+        # Verificar que sea del período activo
+        periodo_activo = PeriodoAcademico.objects.filter(activo=True).first()
+        if clase.periodo != periodo_activo:
+            return Response({"error": "El curso no es del período actual"}, status=400)
+        
+        # Agregar alumno a la clase
+        clase.alumnos.add(alumno)
+        
+        # Crear nota vacía para el alumno
+        Nota.objects.get_or_create(alumno=alumno, clase=clase)
+        
+        # Retornar datos del curso matriculado
+        horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in clase.horarios.all()])
+        
+        return Response({
+            "mensajje": "¡Matriculación exitosa!",
+            "curso": {
+                'clase_id': clase.id,
+                'curso_nombre': clase.nombre,
+                'horarios': horarios_str,
+                'profesor_nombre': clase.profesor_titular.get_full_name() or clase.profesor_titular.username if clase.profesor_titular else 'N/A',
+                'profesor_telefono': clase.profesor_titular.telefono if clase.profesor_titular else 'N/A',
+            }
+        }, status=200)
+    except Clase.DoesNotExist:
+        return Response({"error": "Curso no encontrado"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)

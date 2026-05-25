@@ -99,7 +99,8 @@ class Clase(models.Model):
         related_name='clases_asistente', limit_choices_to={'rol': 'profesor'})
 
     alumnos = models.ManyToManyField(Usuario, limit_choices_to={'rol': 'alumno'}, blank=True)
-    total_sesiones = models.PositiveIntegerField() 
+    total_sesiones = models.PositiveIntegerField()
+    disponible = models.BooleanField(default=False)  
 
     def __str__(self):
         return f"{self.nombre} — {self.nivel} ({self.periodo})"
