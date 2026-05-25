@@ -46,12 +46,12 @@ class SesionClaseInline(admin.TabularInline):
 # SOLO UNA VEZ: Clase admin personalizado con ID visible
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'nivel', 'periodo', 'total_sesiones')
+    list_display = ('id', 'nombre', 'nivel', 'periodo', 'total_sesiones', 'disponible')
     search_fields = ("nombre",)
-    list_filter = ("nivel", "periodo")
+    list_filter = ("nivel", "periodo", "disponible")
     fieldsets = (
         (None, {
-            'fields': ('nombre', 'nivel', 'periodo', 'horarios', 'profesor_titular', 'profesor_asistente', 'alumnos', 'total_sesiones')
+            'fields': ('nombre', 'nivel', 'periodo', 'horarios', 'profesor_titular', 'profesor_asistente', 'alumnos', 'total_sesiones', 'disponible')
         }),
     )
     inlines = [SesionClaseInline]
