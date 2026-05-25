@@ -26,6 +26,7 @@ from .views import (
     director_alumno_cursos_todos_periodos,
     cursos_disponibles,
     matricular_curso,
+    alumno_curso_matriculado,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -81,6 +82,7 @@ urlpatterns = [
     path('director/alumno-cursos-todos-periodos/', director_alumno_cursos_todos_periodos, name='director_alumno_cursos_todos_periodos'),
     path('cursos-disponibles/', cursos_disponibles, name='cursos-disponibles'),
     path('matricular-curso/', matricular_curso, name='matricular-curso'),
+    path('alumno/curso-matriculado/', alumno_curso_matriculado, name='alumno-curso-matriculado'),
 ]
 
 if settings.DEBUG:
