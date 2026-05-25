@@ -1032,7 +1032,7 @@ def matricular_curso(request):
         horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in clase.horarios.all()])
         
         return Response({
-            "mensajje": "¡Matriculación exitosa!",
+            "mensaje": "¡Matriculación exitosa!",
             "curso": {
                 'clase_id': clase.id,
                 'curso_nombre': clase.nombre,
