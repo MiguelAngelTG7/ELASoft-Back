@@ -1003,36 +1003,25 @@ def matricular_curso(request):
     """
     try:
         clase_id = request.data.get('clase_id')
-        if not clase_id:
-            return Response({"error": "clase_id requerido"}, status=400)
-        
         alumno = request.user
         clase = Clase.objects.get(id=clase_id)
         
-        # Verificar que la clase esté disponible
+        # Solo verificar disponible
         if not clase.disponible:
             return Response({"error": "Curso no disponible"}, status=400)
         
-        # Verificar que no esté ya matriculado
+        # Solo verificar que no esté inscrito
         if clase.alumnos.filter(id=alumno.id).exists():
-            return Response({"error": "Ya estás matriculado en este curso"}, status=400)
+            return Response({"error": "Ya estás matriculado"}, status=400)
         
-        # Verificar que sea del período activo
-        periodo_activo = PeriodoAcademico.objects.filter(activo=True).first()
-        if clase.periodo != periodo_activo:
-            return Response({"error": "El curso no es del período actual"}, status=400)
-        
-        # Agregar alumno a la clase
+        # Agregar y crear nota
         clase.alumnos.add(alumno)
-        
-        # Crear nota vacía para el alumno
         Nota.objects.get_or_create(alumno=alumno, clase=clase)
         
-        # Retornar datos del curso matriculado
         horarios_str = ', '.join([f"{h.get_dia_display()} {h.hora.strftime('%H:%M')}" for h in clase.horarios.all()])
         
         return Response({
-            "mensaje": "¡Matriculación exitosa!",
+            "mensaje": "¡Éxito!",
             "curso": {
                 'clase_id': clase.id,
                 'curso_nombre': clase.nombre,
@@ -1040,8 +1029,6 @@ def matricular_curso(request):
                 'profesor_nombre': clase.profesor_titular.get_full_name() or clase.profesor_titular.username if clase.profesor_titular else 'N/A',
                 'profesor_telefono': clase.profesor_titular.telefono if clase.profesor_titular else 'N/A',
             }
-        }, status=200)
-    except Clase.DoesNotExist:
-        return Response({"error": "Curso no encontrado"}, status=404)
+        })
     except Exception as e:
         return Response({"error": str(e)}, status=400)
