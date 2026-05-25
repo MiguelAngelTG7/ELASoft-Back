@@ -965,19 +965,13 @@ def director_alumno_cursos_todos_periodos(request):
 @permission_classes([IsAuthenticated])
 def cursos_disponibles(request):
     """
-    Retorna cursos disponibles del período activo para matricularse
+    Retorna TODOS los cursos disponibles (sin restricciones por ahora)
     """
     try:
         alumno = request.user
         
-        # Obtener periodo activo
-        periodo_activo = PeriodoAcademico.objects.filter(activo=True).first()
-        if not periodo_activo:
-            return Response({"cursos": [], "mensaje": "No hay periodo académico activo"})
-        
-        # Obtener cursos disponibles del periodo activo que no esté matriculado
+        # Obtener cursos disponibles que NO esté matriculado
         cursos = Clase.objects.filter(
-            periodo=periodo_activo,
             disponible=True
         ).exclude(alumnos=alumno).prefetch_related('horarios', 'profesor_titular')
         
