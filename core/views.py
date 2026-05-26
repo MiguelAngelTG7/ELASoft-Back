@@ -965,13 +965,17 @@ def director_alumno_cursos_todos_periodos(request):
 @permission_classes([IsAuthenticated])
 def alumno_curso_matriculado(request):
     """
-    Retorna el primer curso matriculado del alumno (si existe)
+    Retorna el primer curso DISPONIBLE donde el alumno está matriculado (si existe)
+    Solo retorna cursos que estén marcados como disponible=True
     """
     try:
         alumno = request.user
         
-        # Obtener el primer curso donde el alumno está matriculado
-        clase = Clase.objects.filter(alumnos=alumno).select_related('profesor_titular').prefetch_related('horarios').first()
+        # Obtener el primer curso disponible donde el alumno está matriculado
+        clase = Clase.objects.filter(
+            alumnos=alumno,
+            disponible=True
+        ).select_related('profesor_titular').prefetch_related('horarios').first()
         
         if not clase:
             return Response({"curso": None})
