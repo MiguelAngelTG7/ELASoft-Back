@@ -270,10 +270,16 @@ class ProfesorListaSerializer(serializers.ModelSerializer):
         return None
 
     def get_cursos(self, obj):
+        # Obtener el periodo_id del contexto
+        periodo_id = self.context.get('periodo_id')
+        
+        # Filtro base para el período
+        periodo_filter = {'periodo_id': periodo_id} if periodo_id else {}
+        
         # Clases donde es titular
-        clases_titular = Clase.objects.filter(profesor_titular=obj).prefetch_related('horarios')
+        clases_titular = Clase.objects.filter(profesor_titular=obj, **periodo_filter).prefetch_related('horarios')
         # Clases donde es asistente
-        clases_asistente = Clase.objects.filter(profesor_asistente=obj).prefetch_related('horarios')
+        clases_asistente = Clase.objects.filter(profesor_asistente=obj, **periodo_filter).prefetch_related('horarios')
 
         cursos = []
 

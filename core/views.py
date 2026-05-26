@@ -636,7 +636,7 @@ def lista_profesores_director(request):
     profesores_ids_asistente = list(Clase.objects.filter(periodo_id=periodo_id).values_list('profesor_asistente', flat=True))
     profesores_ids = profesores_ids_titular + profesores_ids_asistente
     profesores = Usuario.objects.filter(id__in=profesores_ids, rol='profesor').distinct()
-    serializer = ProfesorListaSerializer(profesores, many=True)
+    serializer = ProfesorListaSerializer(profesores, many=True, context={'periodo_id': periodo_id})
     return Response({"profesores": serializer.data})
 
 # Perido académico: listar todos los periodos
