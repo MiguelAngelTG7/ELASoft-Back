@@ -1017,6 +1017,7 @@ def cursos_disponibles(request):
             data.append({
                 'clase_id': curso.id,
                 'curso_nombre': curso.nombre,
+                'nivel_nombre': curso.nivel.nombre if curso.nivel else 'Sin nivel',
                 'periodo_nombre': curso.periodo.nombre if curso.periodo else 'N/A',
                 'horarios': horarios_str or 'Sin horario',
                 'profesor_nombre': curso.profesor_titular.get_full_name() or curso.profesor_titular.username if curso.profesor_titular else 'N/A',
