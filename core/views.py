@@ -821,10 +821,12 @@ def director_alumno_cursos(request):
         try:
             nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
             promedio = float(nota.promedio)
-            aprobado = promedio >= 14
+            estado = nota.estado_aprobacion()
+            aprobado = estado == "Aprobado"
         except Nota.DoesNotExist:
             promedio = 0.0
             aprobado = False
+            estado = "Pendiente"
         
         data.append({
             "id": clase.id,
@@ -834,6 +836,7 @@ def director_alumno_cursos(request):
             "periodo": clase.periodo.nombre if clase.periodo else "Sin período",
             "promedio": promedio,
             "aprobado": aprobado,
+            "estado": estado,
         })
     return Response(data)
 
@@ -861,10 +864,12 @@ def director_alumno_cursos_todos_periodos(request):
             try:
                 nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
                 promedio = float(nota.promedio)
-                aprobado = promedio >= 14
+                estado = nota.estado_aprobacion()
+                aprobado = estado == "Aprobado"
             except Nota.DoesNotExist:
                 promedio = 0.0
                 aprobado = False
+                estado = "Pendiente"
             
             data.append({
                 "id": clase.id,
@@ -875,6 +880,7 @@ def director_alumno_cursos_todos_periodos(request):
                 "periodo_id": clase.periodo.id if clase.periodo else None,
                 "promedio": promedio,
                 "aprobado": aprobado,
+                "estado": estado,
             })
         return Response(data)
     except Exception as e:
@@ -939,10 +945,12 @@ def director_alumno_cursos_todos_periodos(request):
             try:
                 nota = Nota.objects.get(alumno_id=alumno_id, clase_id=clase.id)
                 promedio = float(nota.promedio)
-                aprobado = promedio >= 14
+                estado = nota.estado_aprobacion()
+                aprobado = estado == "Aprobado"
             except Nota.DoesNotExist:
                 promedio = 0.0
                 aprobado = False
+                estado = "Pendiente"
             
             data.append({
                 "id": clase.id,
@@ -953,6 +961,7 @@ def director_alumno_cursos_todos_periodos(request):
                 "periodo_id": clase.periodo.id if clase.periodo else None,
                 "promedio": promedio,
                 "aprobado": aprobado,
+                "estado": estado,
             })
         return Response(data)
     except Exception as e:

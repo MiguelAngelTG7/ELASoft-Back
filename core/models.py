@@ -168,7 +168,15 @@ class Nota(models.Model):
         if (self.participacion_1 == 0 or self.participacion_2 == 0 or self.participacion_3 == 0 or 
             self.tareas == 0 or self.examen_final == 0):
             return "Pendiente"
-        
+
+        total_sesiones = self.clase.total_sesiones or 0
+        asistencias_registradas = Asistencia.objects.filter(
+            clase=self.clase,
+            alumno=self.alumno,
+        ).count()
+        if total_sesiones <= 0 or asistencias_registradas < total_sesiones:
+            return "Pendiente"
+
         asistencia = self.calcular_asistencia()
         return "Aprobado" if self.promedio >= 14 and asistencia >= 75 else "Desaprobado"
 
